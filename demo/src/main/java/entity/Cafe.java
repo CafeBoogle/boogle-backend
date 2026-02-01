@@ -1,6 +1,8 @@
-package domain;
+package entity;
 
 import jakarta.persistence.*;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "CAFE_INFO")
@@ -33,5 +35,13 @@ public class Cafe {
 
     @Column(length = 20)
     private String contact;
+
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+    }
 }
 
