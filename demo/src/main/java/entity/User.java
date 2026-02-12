@@ -2,6 +2,7 @@ package entity;
 
 import entity.type.Provider;
 import jakarta.persistence.*;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -15,6 +16,11 @@ import java.time.LocalDateTime;
                 )
         }
 )
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class User {
 
     @Id
