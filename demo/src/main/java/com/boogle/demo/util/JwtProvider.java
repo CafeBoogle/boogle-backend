@@ -1,4 +1,4 @@
-package util;
+package com.boogle.demo.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -65,4 +65,6 @@ public class JwtProvider {
 
         return Long.parseLong(claims.getSubject());
     }
+
+
 }

@@ -1,4 +1,4 @@
-package entity;
+package com.boogle.demo.entity;
 
 import jakarta.persistence.*;
 
