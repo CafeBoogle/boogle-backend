@@ -1,4 +1,7 @@
 spring:
+  config:
+    import: optional:classpath:secret.properties
+
   application:
     name: demo
 
