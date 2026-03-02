@@ -1,8 +1,6 @@
 spring:
   application:
     name: demo
-    autoconfigure:
-      exclude: org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
 
   datasource:
     url: jdbc:h2:file:./data/testdb
@@ -14,7 +12,7 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: update
-      show-sql: true
+    show-sql: true
     properties:
       hibernate:
       format_sql: true
@@ -32,3 +30,8 @@ jwt:
 kakao:
   client-id: ${KAKAO_CLIENT_ID}
   redirect-uri: ${KAKAO_REDIRECT_URI}
+
+naver:
+  client-id: ${NAVER_CLIENT_ID}
+  client-secret: ${NAVER_CLIENT_SECRET}
+  redirect-uri: ${NAVER_REDIRECT_URI}
