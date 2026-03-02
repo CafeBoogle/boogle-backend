@@ -23,15 +23,15 @@ spring:
       path: /h2-console
 
 jwt:
-  secret: boogle-super-secret-key-that-is-over-32-characters-long
+  secret: ${JWT_SECRET}
   access-token-expiration: 900000
   refresh-token-expiration: 1209600000
 
 kakao:
-  client-id: b6638b255ebf5d503bd755eb7d27aac3
-  redirect-uri: http://localhost:8080/api/oauth/kakao/callback
+  client-id: ${KAKAO_CLIENT_ID}
+  redirect-uri: ${KAKAO_REDIRECT_URI}
 
 naver:
-  client-id: Hp3wT4d6Ecem36NtFuCc
-  client-secret: V9ET9CHCQv
-  redirect-uri: http://localhost:8080/api/oauth/naver/callback
+  client-id: ${NAVER_CLIENT_ID}
+  client-secret: ${NAVER_CLIENT_SECRET}
+  redirect-uri: ${NAVER_REDIRECT_URI}
