@@ -1,7 +1,7 @@
-package repository;
+package com.boogle.repository;
 
-import entity.User;
-import entity.type.Provider;
+import com.boogle.entity.User;
+import com.boogle.entity.type.Provider;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

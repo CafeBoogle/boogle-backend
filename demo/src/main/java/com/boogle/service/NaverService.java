@@ -1,7 +1,7 @@
-package service;
+package com.boogle.service;
 
-import entity.User;
-import entity.type.Provider;
+import com.boogle.entity.User;
+import com.boogle.entity.type.Provider;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,21 +10,24 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-import repository.UserRepository;
-import util.CookieUtil;
-import util.JwtProvider;
+import com.boogle.repository.UserRepository;
+import com.boogle.util.CookieUtil;
+import com.boogle.util.JwtProvider;
 
 import java.io.IOException;
 import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class KakaoService {
+public class NaverService {
 
-    @Value("${kakao.client-id}")
+    @Value("${naver.client-id}")
     private String clientId;
 
-    @Value("${kakao.redirect-uri}")
+    @Value("${naver.client-secret}") // 1. 시크릿 키 필드 추가
+    private String clientSecret;
+
+    @Value("${naver.redirect-uri}")
     private String redirectUri;
 
     private final UserRepository userRepository;
@@ -35,12 +38,14 @@ public class KakaoService {
 
         RestTemplate restTemplate = new RestTemplate();
 
-        // 1️⃣ 인가코드 → access_token 요청
+        // 인가코드 -> access_token 요청
         MultiValueMap<String, String> tokenParams = new LinkedMultiValueMap<>();
         tokenParams.add("grant_type", "authorization_code");
         tokenParams.add("client_id", clientId);
+        tokenParams.add("client_secret", clientSecret); // 2. 요청 파라미터에 시크릿 추가
         tokenParams.add("redirect_uri", redirectUri);
         tokenParams.add("code", code);
+        // state 검증이 필요하다면 여기에 state도 추가할 수 있습니다.
 
         HttpHeaders tokenHeaders = new HttpHeaders();
         tokenHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -49,41 +54,42 @@ public class KakaoService {
                 new HttpEntity<>(tokenParams, tokenHeaders);
 
         ResponseEntity<Map> tokenResponse = restTemplate.postForEntity(
-                "https://kauth.kakao.com/oauth/token",
+                "https://nid.naver.com/oauth2.0/token",
                 tokenRequest,
                 Map.class
         );
 
-        String accessToken = (String) tokenResponse.getBody().get("access_token");
+        String naverAccessToken  = (String) tokenResponse.getBody().get("access_token");
 
-        // 2️⃣ access_token → 사용자 정보 요청
+        // access_token -> 사용자 정보 요청
         HttpHeaders userHeaders = new HttpHeaders();
-        userHeaders.setBearerAuth(accessToken);
+        userHeaders.setBearerAuth(naverAccessToken );
 
         HttpEntity<?> userRequest = new HttpEntity<>(userHeaders);
 
         ResponseEntity<Map> userResponse = restTemplate.exchange(
-                "https://kapi.kakao.com/v2/user/me",
+                "https://openapi.naver.com/v1/nid/me",
                 HttpMethod.GET,
                 userRequest,
                 Map.class
         );
 
         Map body = userResponse.getBody();
-        Long kakaoId = ((Number) body.get("id")).longValue();
-        String providerUserId = String.valueOf(kakaoId);
+        Map responseMap = (Map) body.get("response"); // 네이버는 실제 정보가 "response" 안에 있음
 
-        Map kakaoAccount = (Map) body.get("kakao_account");
-        Map profile = kakaoAccount != null ? (Map) kakaoAccount.get("profile") : null;
-        String nickname = profile != null ? (String) profile.get("nickname") : "kakao_user";
+        String providerUserId = (String) responseMap.get("id"); // 네이버 ID는 보통 String으로 옵니다.
+        String nickname = (String) responseMap.get("nickname");
 
-        // 3️⃣ DB 조회 또는 회원가입
+        Map naverAccount = (Map) body.get("naver_account");
+        Map profile = naverAccount != null ? (Map) naverAccount.get("profile") : null;
+
+        // DB 조회 또는 회원가입
         User user = userRepository
-                .findByProviderAndProviderUserId(Provider.KAKAO, providerUserId)
+                .findByProviderAndProviderUserId(Provider.NAVER, providerUserId)
                 .orElseGet(() -> {
 
                     User newUser = new User();
-                    newUser.setProvider(Provider.KAKAO);
+                    newUser.setProvider(Provider.NAVER);
                     newUser.setProviderUserId(providerUserId);
                     newUser.setNickname(nickname);
                     newUser.setProfileImageName("default.png");
@@ -91,13 +97,15 @@ public class KakaoService {
                     return userRepository.save(newUser);
                 });
 
-        // 4️⃣ JWT 발급
-        String jwt = jwtProvider.createdAccessToken(user.getId());
+        // JWT 발급
+        String accessToken = jwtProvider.createAccessToken(user.getId());
+        String refreshToken = jwtProvider.createRefreshToken(user.getId()); // refreshToken도 같이 발급
 
-        // 5️⃣ 쿠키 저장
-        cookieUtil.addAccessTokenCookie(response, jwt);
+        // 쿠키 저장
+        cookieUtil.addAccessTokenCookie(response, accessToken);
+        cookieUtil.addRefreshTokenCookie(response, refreshToken);
 
-        // 6️⃣ 프론트로 리다이렉트
+        // 프론트로 리다이렉트
         response.sendRedirect("http://localhost:3000");
     }
 }

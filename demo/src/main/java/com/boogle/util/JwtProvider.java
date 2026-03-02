@@ -1,4 +1,4 @@
-package util;
+package com.boogle.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -17,7 +17,7 @@ public class JwtProvider {
     private final long refreshTokenExpire;
 
     public JwtProvider(
-            @Value("${jwt.secret}") String secret,
+            @Value("boogle-super-secret-key-that-is-over-32-characters-long") String secret,
             @Value("${jwt.access-token-expiration}") long accessTokenExpire,
             @Value("${jwt.refresh-token-expiration}") long refreshTokenExpire
     ) {
@@ -27,9 +27,10 @@ public class JwtProvider {
     }
 
     // accessToken
-    public String createdAccessToken(Long userId) {
+    public String createAccessToken(Long userId) {
         return Jwts.builder()
                 .setSubject(String.valueOf(userId))
+                .claim("type", "access")
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpire))
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -37,13 +38,16 @@ public class JwtProvider {
     }
 
     // refreshToken
-    public String refreshAccessToken(Long userId) {
+    public String createRefreshToken(Long userId) {
         return Jwts.builder()
+                .setSubject(String.valueOf(userId))
+                .claim("type", "refresh")
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpire))
+                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpire))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }
+
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder()

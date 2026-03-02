@@ -1,10 +1,10 @@
-package controller;
+package com.boogle.controller;
 
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
-import service.KakaoService;
+import com.boogle.service.KakaoService;
 
 import java.io.IOException;
 

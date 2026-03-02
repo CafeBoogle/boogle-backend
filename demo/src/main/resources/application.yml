@@ -1,8 +1,6 @@
 spring:
   application:
     name: demo
-    autoconfigure:
-      exclude: org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
 
   datasource:
     url: jdbc:h2:file:./data/testdb
@@ -14,7 +12,7 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: update
-      show-sql: true
+    show-sql: true
     properties:
       hibernate:
       format_sql: true
@@ -25,10 +23,15 @@ spring:
       path: /h2-console
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: boogle-super-secret-key-that-is-over-32-characters-long
   access-token-expiration: 900000
   refresh-token-expiration: 1209600000
 
 kakao:
-  client-id: ${KAKAO_CLIENT_ID}
-  redirect-uri: ${KAKAO_REDIRECT_URI}
+  client-id: b6638b255ebf5d503bd755eb7d27aac3
+  redirect-uri: http://localhost:8080/api/oauth/kakao/callback
+
+naver:
+  client-id: Hp3wT4d6Ecem36NtFuCc
+  client-secret: V9ET9CHCQv
+  redirect-uri: http://localhost:8080/api/oauth/naver/callback

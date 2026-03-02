@@ -1,6 +1,6 @@
-package entity;
+package com.boogle.entity;
 
-import entity.type.Provider;
+import com.boogle.entity.type.Provider;
 import jakarta.persistence.*;
 import lombok.*;
 
