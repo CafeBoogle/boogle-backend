@@ -92,7 +92,7 @@ public class KakaoService {
                 });
 
         // 4️⃣ JWT 발급
-        String jwt = jwtProvider.createAccessToken(user.getId());
+        String jwt = jwtProvider.createAccessToken(user.getId(), user.getNickname(), user.getRole());
 
         // 5️⃣ 쿠키 저장
         cookieUtil.addAccessTokenCookie(response, jwt);

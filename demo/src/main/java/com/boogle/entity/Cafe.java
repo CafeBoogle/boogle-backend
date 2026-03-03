@@ -1,10 +1,13 @@
 package com.boogle.entity;
 
 import jakarta.persistence.*;
+import lombok.Builder;
+import lombok.Getter;
 
 import java.time.LocalDateTime;
 
 @Entity
+@Getter
 @Table(name = "CAFE_INFO")
 public class Cafe {
 
@@ -13,7 +16,7 @@ public class Cafe {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private Long kakaoPlaceId;
+    private String kakaoPlaceId;
 
     @Column(nullable = false, length = 50)
     private String name;
@@ -42,6 +45,15 @@ public class Cafe {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+    }
+
+    @Builder
+    public Cafe(String kakaoPlaceId, String name, String address, Double latitude, Double longitude) {
+        this.kakaoPlaceId = kakaoPlaceId;
+        this.name = name;
+        this.address = address;
+        this.latitude = latitude;
+        this.longitude = longitude;
     }
 }
 
