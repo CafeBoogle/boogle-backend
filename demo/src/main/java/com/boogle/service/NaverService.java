@@ -21,6 +21,8 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class NaverService {
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
 
     @Value("${naver.client-id}")
     private String clientId;
@@ -118,7 +120,7 @@ public class NaverService {
             User user = userOptional.get();
             String accessToken = jwtProvider.createAccessToken(user.getId(), user.getNickname(), user.getRole());
             cookieUtil.addAccessTokenCookie(response, accessToken);
-            response.sendRedirect("http://localhost:3000/main");
+            response.sendRedirect(frontendUrl + "/main");
         } else { // 신규 유저는 닉네임 null로 임시코드 발급 후 닉네임 입력 후 DB저장
             User newUser = new User();
             newUser.setProvider(Provider.NAVER);
@@ -127,7 +129,7 @@ public class NaverService {
             userRepository.save(newUser);
 
             // 닉네임 설정을 위한 임시 권한 토큰 발급
-            response.sendRedirect("http://localhost:3000/nickname-setup?userId=" + newUser.getId());
+            response.sendRedirect(frontendUrl + "/signup");
         }
     }
 }

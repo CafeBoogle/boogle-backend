@@ -19,7 +19,7 @@ public class JwtProvider {
     private final long refreshTokenExpire;
 
     public JwtProvider(
-            @Value("boogle-super-secret-key-that-is-over-32-characters-long") String secret,
+            @Value("${jwt.secret}") String secret,
             @Value("${jwt.access-token-expiration}") long accessTokenExpire,
             @Value("${jwt.refresh-token-expiration}") long refreshTokenExpire
     ) {

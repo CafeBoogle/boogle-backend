@@ -2,6 +2,9 @@ spring:
   config:
     import: optional:classpath:secret.properties
 
+  profiles:
+    active: dev   # 기본 실행 프로파일
+
   application:
     name: demo
 
@@ -18,7 +21,7 @@ spring:
     show-sql: true
     properties:
       hibernate:
-      format_sql: true
+        format_sql: true
 
   h2:
     console:
@@ -33,6 +36,7 @@ jwt:
 kakao:
   client-id: ${KAKAO_CLIENT_ID}
   redirect-uri: ${KAKAO_REDIRECT_URI}
+  client-secret: ${KAKAO_CLIENT_SECRET}
 
 naver:
   client-id: ${NAVER_CLIENT_ID}

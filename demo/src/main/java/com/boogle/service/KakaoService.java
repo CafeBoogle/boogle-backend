@@ -2,6 +2,7 @@ package com.boogle.service;
 
 import com.boogle.entity.User;
 import com.boogle.entity.type.Provider;
+import com.boogle.entity.type.Role;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,16 +17,21 @@ import com.boogle.util.JwtProvider;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
+
 @RequiredArgsConstructor
 public class KakaoService {
-
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
     @Value("${kakao.client-id}")
     private String clientId;
-
     @Value("${kakao.redirect-uri}")
     private String redirectUri;
+    @Value("${kakao.client-secret}")
+    private String clientSecret;
+
 
     private final UserRepository userRepository;
     private final JwtProvider jwtProvider;
@@ -33,71 +39,130 @@ public class KakaoService {
 
     public void login(String code, HttpServletResponse response) throws IOException {
 
+        // 1️⃣ 카카오 access token 발급
+        String kakaoAccessToken = getKakaoAccessToken(code);
+
+        // 2️⃣ 카카오 사용자 정보 조회
+        // 2️⃣ 사용자 정보 조회
+        Map body = getKakaoUserInfo(kakaoAccessToken);
+
+        String providerUserId = String.valueOf(body.get("id"));
+
+        Map<String, Object> kakaoAccount =
+                (Map<String, Object>) body.get("kakao_account");
+
+        String email = kakaoAccount != null
+                ? (String) kakaoAccount.get("email")
+                : null;
+        // 3️⃣ DB 조회
+        Optional<User> optionalUser =
+                userRepository.findByProviderAndProviderUserId(
+                        Provider.KAKAO,
+                        providerUserId
+                );
+
+        if (optionalUser.isPresent()) {
+
+            User user = optionalUser.get();
+
+            if (user.getNickname() == null) {
+                issueTempToken(user, response);
+                response.sendRedirect(frontendUrl + "/signup");
+            } else {
+                issueFullToken(user, response);
+                response.sendRedirect(frontendUrl + "/");
+            }
+
+        } else {
+
+            User newUser = User.builder()
+                    .provider(Provider.KAKAO)
+                    .providerUserId(providerUserId)
+                    .nickname(null)
+                    .role(Role.USER)
+                    .profileImageName("default.png")
+                    .build();
+
+            userRepository.save(newUser);
+
+            issueTempToken(newUser, response);
+            System.out.println("providerUserId = " + providerUserId);
+            System.out.println("optionalUser = " + optionalUser.isPresent());
+            System.out.println("clientId="+clientId);
+            System.out.println("redirectUri"+redirectUri);
+            response.sendRedirect(frontendUrl + "/signup");
+        }
+    }
+    private String getKakaoAccessToken(String code) {
+
         RestTemplate restTemplate = new RestTemplate();
 
-        // 1️⃣ 인가코드 → access_token 요청
-        MultiValueMap<String, String> tokenParams = new LinkedMultiValueMap<>();
-        tokenParams.add("grant_type", "authorization_code");
-        tokenParams.add("client_id", clientId);
-        tokenParams.add("redirect_uri", redirectUri);
-        tokenParams.add("code", code);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("client_secret", clientSecret);
+        params.add("grant_type", "authorization_code");
+        params.add("client_id", clientId);
+        params.add("redirect_uri", redirectUri);
+        params.add("code", code);
 
-        HttpHeaders tokenHeaders = new HttpHeaders();
-        tokenHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        HttpEntity<MultiValueMap<String, String>> tokenRequest =
-                new HttpEntity<>(tokenParams, tokenHeaders);
+        HttpEntity<MultiValueMap<String, String>> request =
+                new HttpEntity<>(params, headers);
 
-        ResponseEntity<Map> tokenResponse = restTemplate.postForEntity(
+        ResponseEntity<Map> response = restTemplate.postForEntity(
                 "https://kauth.kakao.com/oauth/token",
-                tokenRequest,
+                request,
                 Map.class
         );
 
-        String accessToken = (String) tokenResponse.getBody().get("access_token");
+        return (String) response.getBody().get("access_token");
+    }
 
-        // 2️⃣ access_token → 사용자 정보 요청
-        HttpHeaders userHeaders = new HttpHeaders();
-        userHeaders.setBearerAuth(accessToken);
+    private Map getKakaoUserInfo(String accessToken) {
 
-        HttpEntity<?> userRequest = new HttpEntity<>(userHeaders);
+        RestTemplate restTemplate = new RestTemplate();
 
-        ResponseEntity<Map> userResponse = restTemplate.exchange(
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
+
+        HttpEntity<?> request = new HttpEntity<>(headers);
+
+        ResponseEntity<Map> response = restTemplate.exchange(
                 "https://kapi.kakao.com/v2/user/me",
                 HttpMethod.GET,
-                userRequest,
+                request,
                 Map.class
         );
 
-        Map body = userResponse.getBody();
-        Long kakaoId = ((Number) body.get("id")).longValue();
-        String providerUserId = String.valueOf(kakaoId);
+        return response.getBody();
+    }
 
-        Map kakaoAccount = (Map) body.get("kakao_account");
-        Map profile = kakaoAccount != null ? (Map) kakaoAccount.get("profile") : null;
-        String nickname = profile != null ? (String) profile.get("nickname") : "kakao_user";
+    private void issueTempToken(User user, HttpServletResponse response) {
 
-        // 3️⃣ DB 조회 또는 회원가입
-        User user = userRepository
-                .findByProviderAndProviderUserId(Provider.KAKAO, providerUserId)
-                .orElseGet(() -> {
+        String accessToken = jwtProvider.createAccessToken(
+                user.getId(),
+                null,                  // 닉네임 아직 없음
+                user.getRole()
+        );
 
-                    User newUser = new User();
-                    newUser.setProvider(Provider.KAKAO);
-                    newUser.setProviderUserId(providerUserId);
-                    newUser.setNickname(nickname);
-                    newUser.setProfileImageName("default.png");
+        cookieUtil.addAccessTokenCookie(response, accessToken);
+    }
+    private void issueFullToken(User user, HttpServletResponse response) {
 
-                    return userRepository.save(newUser);
-                });
+        String accessToken = jwtProvider.createAccessToken(
+                user.getId(),
+                user.getNickname(),
+                user.getRole()
+        );
 
-        // 4️⃣ JWT 발급
-        String jwt = jwtProvider.createAccessToken(user.getId(), user.getNickname(), user.getRole());
+        String refreshToken = jwtProvider.createRefreshToken(
+                user.getId(),
+                user.getNickname(),
+                user.getRole()
+        );
 
-        // 5️⃣ 쿠키 저장
-        cookieUtil.addAccessTokenCookie(response, jwt);
-
-        // 6️⃣ 프론트로 리다이렉트
-        response.sendRedirect("http://localhost:3000");
+        cookieUtil.addAccessTokenCookie(response, accessToken);
+        cookieUtil.addRefreshTokenCookie(response, refreshToken);
     }
 }
