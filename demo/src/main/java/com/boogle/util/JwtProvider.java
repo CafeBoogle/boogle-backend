@@ -1,5 +1,7 @@
 package com.boogle.util;
 
+import com.boogle.entity.User;
+import com.boogle.entity.type.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -27,9 +29,12 @@ public class JwtProvider {
     }
 
     // accessToken
-    public String createAccessToken(Long userId) {
+    public String createAccessToken(Long userId, String nickname, Role role) {
+        Role targetRole = (role != null) ? role : Role.USER;
         return Jwts.builder()
                 .setSubject(String.valueOf(userId))
+                .claim("nickname", nickname)
+                .claim("role", targetRole.name())
                 .claim("type", "access")
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + accessTokenExpire))
@@ -38,9 +43,10 @@ public class JwtProvider {
     }
 
     // refreshToken
-    public String createRefreshToken(Long userId) {
+    public String createRefreshToken(Long userId, String nickname, Role role) {
         return Jwts.builder()
                 .setSubject(String.valueOf(userId))
+                .claim("nickname", nickname)
                 .claim("type", "refresh")
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpire))

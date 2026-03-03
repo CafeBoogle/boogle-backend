@@ -1,6 +1,7 @@
 package com.boogle.entity;
 
 import com.boogle.entity.type.Provider;
+import com.boogle.entity.type.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -36,6 +37,9 @@ public class User {
 
     @Column(length = 50)
     private String nickname;
+
+    @Enumerated(EnumType.STRING)
+    private Role role;
 
     @Column(name = "profile_image_name", nullable = false, length = 100)
     private String profileImageName;
