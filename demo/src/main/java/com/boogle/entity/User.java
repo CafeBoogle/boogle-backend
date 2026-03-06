@@ -35,7 +35,7 @@ public class User {
     @Column(name = "provider_user_id", nullable = false, length = 100)
     private String providerUserId;
 
-    @Column(length = 50)
+    @Column(nullable = false, unique = true)
     private String nickname;
 
     @Enumerated(EnumType.STRING)

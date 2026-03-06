@@ -77,11 +77,12 @@ public class NaverService {
                 Map.class
         );
 
+        // NaverService.java 수정 부분
         Map body = userResponse.getBody();
-        Map responseMap = (Map) body.get("response"); // 네이버는 실제 정보가 "response" 안에 있음
+        Map<String, Object> responseMap = (Map<String, Object>) body.get("response");
 
-        String providerUserId = (String) responseMap.get("id"); // 네이버 ID는 보통 String으로 옵니다.
-        String nickname = (String) responseMap.get("nickname");
+        String providerUserId = (String) responseMap.get("id"); // 네이버 고유 ID
+        String nicknameFromNaver = (String) responseMap.get("nickname");
 
         Map naverAccount = (Map) body.get("naver_account");
         Map profile = naverAccount != null ? (Map) naverAccount.get("profile") : null;
@@ -116,20 +117,33 @@ public class NaverService {
         Optional<User> userOptional = userRepository.findByProviderAndProviderUserId(Provider.NAVER, providerUserId);
 
         if (userOptional.isPresent()) {
-            //기존 유저는 메인으로 리다이렉트
             User user = userOptional.get();
+
+            // 닉네임이 null인 경우 (가입 중간에 이탈했던 유저) 처리
+            if (user.getNickname() == null) {
+                response.sendRedirect(frontendUrl + "/signup?provider=NAVER&userId=" + providerUserId);
+                return;
+            }
+
+            // 정상 기존 유저는 메인으로
             String accessToken = jwtProvider.createAccessToken(user.getId(), user.getNickname(), user.getRole());
             cookieUtil.addAccessTokenCookie(response, accessToken);
             response.sendRedirect(frontendUrl + "/main");
-        } else { // 신규 유저는 닉네임 null로 임시코드 발급 후 닉네임 입력 후 DB저장
-            User newUser = new User();
-            newUser.setProvider(Provider.NAVER);
-            newUser.setProviderUserId(providerUserId);
-            newUser.setNickname(null); // 닉네임을 아직 입력 안 했음
+
+        } else {
+            // 1. 신규 유저 DB 한 줄 파기 (가입 찌꺼기 방지용)
+            User newUser = User.builder()
+                    .provider(Provider.NAVER)
+                    .providerUserId(providerUserId)
+                    .nickname(null)
+                    .profileImageName("default.png")
+                    .role(com.boogle.entity.type.Role.USER) // Role 위치 확인 필요
+                    .build();
             userRepository.save(newUser);
 
-            // 닉네임 설정을 위한 임시 권한 토큰 발급
-            response.sendRedirect(frontendUrl + "/signup");
+            // 2. 중요: 리다이렉트 시 쿼리 스트링으로 정보를 넘겨줌!
+            // 그래야 리액트에서 이 값을 읽어서 최종 가입(/api/signup) 시 백엔드로 다시 보낼 수 있음
+            response.sendRedirect(frontendUrl + "/signup?provider=NAVER&userId=" + providerUserId);
         }
     }
 }

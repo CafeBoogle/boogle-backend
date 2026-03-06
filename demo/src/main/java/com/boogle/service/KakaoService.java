@@ -51,9 +51,6 @@ public class KakaoService {
         Map<String, Object> kakaoAccount =
                 (Map<String, Object>) body.get("kakao_account");
 
-        String email = kakaoAccount != null
-                ? (String) kakaoAccount.get("email")
-                : null;
         // 3️⃣ DB 조회
         Optional<User> optionalUser =
                 userRepository.findByProviderAndProviderUserId(
@@ -70,11 +67,10 @@ public class KakaoService {
                 response.sendRedirect(frontendUrl + "/signup");
             } else {
                 issueFullToken(user, response);
-                response.sendRedirect(frontendUrl + "/");
+                response.sendRedirect(frontendUrl + "/category");
             }
 
         } else {
-
             User newUser = User.builder()
                     .provider(Provider.KAKAO)
                     .providerUserId(providerUserId)

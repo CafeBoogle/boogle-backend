@@ -28,6 +28,11 @@ spring:
       enabled: true
       path: /h2-console
 
+  servlet:
+    multipart:
+      max-file-size: 10MB       # 파일 하나당 최대 용량
+      max-request-size: 10MB    # 전체 요청당 최대 용량
+
 jwt:
   secret: ${JWT_SECRET}
   access-token-expiration: 900000
@@ -37,8 +42,21 @@ kakao:
   client-id: ${KAKAO_CLIENT_ID}
   redirect-uri: ${KAKAO_REDIRECT_URI}
   client-secret: ${KAKAO_CLIENT_SECRET}
+  logout-redirect-uri: ${KAKAO_LOGOUT_REDIRECT_URI}
 
 naver:
   client-id: ${NAVER_CLIENT_ID}
   client-secret: ${NAVER_CLIENT_SECRET}
   redirect-uri: ${NAVER_REDIRECT_URI}
+
+file:
+  upload-dir: ./uploads/profiles/
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+    # 리소스 매핑 에러 방지용
+    disable-swagger-default-url: true
+  api-docs:
+    path: /v3/api-docs
