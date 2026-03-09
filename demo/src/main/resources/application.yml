@@ -1,37 +1,14 @@
 spring:
-  config:
-    import: optional:classpath:secret.properties
-
   profiles:
-    active: dev   # 기본 실행 프로파일
-
+    active: dev # 기본은 로컬 실행
   application:
     name: demo
-
-  datasource:
-    url: jdbc:h2:file:./data/testdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-
-  jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-
+  config:
+    import: "optional:classpath:secret.properties"
   servlet:
     multipart:
-      max-file-size: 10MB       # 파일 하나당 최대 용량
-      max-request-size: 10MB    # 전체 요청당 최대 용량
+      max-file-size: 10MB
+      max-request-size: 10MB
 
 jwt:
   secret: ${JWT_SECRET}
@@ -48,15 +25,3 @@ naver:
   client-id: ${NAVER_CLIENT_ID}
   client-secret: ${NAVER_CLIENT_SECRET}
   redirect-uri: ${NAVER_REDIRECT_URI}
-
-file:
-  upload-dir: ./uploads/profiles/
-
-springdoc:
-  swagger-ui:
-    path: /swagger-ui.html
-    enabled: true
-    # 리소스 매핑 에러 방지용
-    disable-swagger-default-url: true
-  api-docs:
-    path: /v3/api-docs

@@ -1,2 +1,28 @@
+server:
+  port: 8080
+  # 로컬에선 /boogle/api 없이 쓰는 게 편하면 비워두고, 똑같이 맞추려면 추가하세요.
+
+spring:
+  datasource:
+    url: jdbc:h2:file:./data/testdb;AUTO_SERVER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+file:
+  upload-dir: ./uploads/profiles/
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
 app:
   frontend-url: http://localhost:5173
