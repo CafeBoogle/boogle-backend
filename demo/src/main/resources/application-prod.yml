@@ -1,7 +1,10 @@
 server:
   port: 8080
   servlet:
-    context-path: /boogle/api
+    context-path: /boogle
+
+app:
+  frontend-url: https://cafeboogle-frontend.vercel.app
 
 spring:
   datasource:
@@ -21,13 +24,3 @@ spring:
 
 file:
   upload-dir: /home/ubuntu/app/uploads/profiles/
-
-springdoc:
-  swagger-ui:
-    path: /swagger-ui.html
-    enabled: true
-  api-docs:
-    path: /v3/api-docs
-
-app:
-  frontend-url: https://moonsunpower.com/boogle

@@ -1,14 +1,10 @@
 spring:
   profiles:
-    active: dev # 기본은 로컬 실행
+    active: dev # 로컬 실행 시 기본값
   application:
-    name: demo
+    name: boogle
   config:
-    import: "optional:classpath:secret.properties"
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
+    import: "optional:classpath:secret-${spring.profiles.active}.properties"
 
 jwt:
   secret: ${JWT_SECRET}
@@ -17,8 +13,8 @@ jwt:
 
 kakao:
   client-id: ${KAKAO_CLIENT_ID}
-  redirect-uri: ${KAKAO_REDIRECT_URI}
   client-secret: ${KAKAO_CLIENT_SECRET}
+  redirect-uri: ${KAKAO_REDIRECT_URI}
   logout-redirect-uri: ${KAKAO_LOGOUT_REDIRECT_URI}
 
 naver:

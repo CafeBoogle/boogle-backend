@@ -15,10 +15,15 @@ import java.io.IOException;
 public class KakaoOAuthController {
     @Value("${kakao.client-id}")
     private String clientId;
+
     @Value("${kakao.redirect-uri}")
     private String redirectUri;
+
     @Value("${kakao.logout-redirect-uri}")
     private String logoutRedirectUri;
+
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
 
     private final CookieUtil cookieUtil;
     private final KakaoService kakaoService;
@@ -57,6 +62,6 @@ public class KakaoOAuthController {
 
     @GetMapping("/api/oauth/kakao/logout/callback")
     public void kakaoLogoutCallback(HttpServletResponse response) throws IOException {
-        response.sendRedirect("http://localhost:5173/");
+        response.sendRedirect(frontendUrl + "/");
     }
 }
