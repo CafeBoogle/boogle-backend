@@ -1,10 +1,14 @@
 package com.boogle.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
+@Getter
+@Setter
 @Table(name = "REVIEWS",
         indexes = {
                 @Index(name = "idx_review_cafe", columnList = "cafe_id"),
