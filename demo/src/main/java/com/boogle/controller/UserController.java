@@ -26,7 +26,7 @@ public class UserController {
 
     @PostMapping("/user/setup-nickname")
     public ResponseEntity<?> setupNickname(@Valid @RequestBody NicknameRequestDto dto,
-                                           @AuthenticationPrincipal Long userId, // 🚨 여기서 바로 받기
+                                           @AuthenticationPrincipal Long userId,
                                            HttpServletResponse response) {
 
         // dto.getUserId() 대신 인증 정보에서 가져온 userId 사용
