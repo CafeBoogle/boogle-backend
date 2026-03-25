@@ -3,6 +3,7 @@ package com.boogle.service;
 import com.boogle.entity.User;
 import com.boogle.entity.type.Provider;
 import com.boogle.entity.type.Role;
+import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,37 +32,40 @@ public class KakaoService {
     private String redirectUri;
     @Value("${kakao.client-secret}")
     private String clientSecret;
-
+    @PostConstruct
+    public void debugConfig() {
+        System.out.println("========== KAKAO CONFIG ==========");
+        System.out.println("clientId = " + clientId);
+        System.out.println("redirectUri = " + redirectUri);
+        System.out.println("==================================");
+    }
 
     private final UserRepository userRepository;
     private final JwtProvider jwtProvider;
     private final CookieUtil cookieUtil;
-
     public void login(String code, HttpServletResponse response) throws IOException {
 
         // 1️⃣ 카카오 access token 발급
         String kakaoAccessToken = getKakaoAccessToken(code);
 
-        // 2️⃣ 카카오 사용자 정보 조회
         // 2️⃣ 사용자 정보 조회
-        Map body = getKakaoUserInfo(kakaoAccessToken);
-
+        Map<String, Object> body = getKakaoUserInfo(kakaoAccessToken);
         String providerUserId = String.valueOf(body.get("id"));
 
-        Map<String, Object> kakaoAccount =
-                (Map<String, Object>) body.get("kakao_account");
+        // [추가] 카카오 properties에서 닉네임 가져오기
+        Map<String, Object> properties = (Map<String, Object>) body.get("properties");
+        String kakaoNickname = (properties != null) ? (String) properties.get("nickname") : null;
 
         // 3️⃣ DB 조회
-        Optional<User> optionalUser =
-                userRepository.findByProviderAndProviderUserId(
-                        Provider.KAKAO,
-                        providerUserId
-                );
+        Optional<User> optionalUser = userRepository.findByProviderAndProviderUserId(
+                Provider.KAKAO,
+                providerUserId
+        );
 
         if (optionalUser.isPresent()) {
-
             User user = optionalUser.get();
 
+            // 기존 유저인데 닉네임이 없다면 (이전 가입 실패 등) 카카오 닉네임으로 업데이트 시도 가능
             if (user.getNickname() == null) {
                 issueTempToken(user, response);
                 response.sendRedirect(frontendUrl + "/signup");
@@ -69,12 +73,12 @@ public class KakaoService {
                 issueFullToken(user, response);
                 response.sendRedirect(frontendUrl + "/category");
             }
-
         } else {
+            // 4️⃣ 신규 가입 시 카카오 닉네임 적용
             User newUser = User.builder()
                     .provider(Provider.KAKAO)
                     .providerUserId(providerUserId)
-                    .nickname(null)
+                    .nickname(kakaoNickname != null ? kakaoNickname : "TempUser") // null 방지
                     .role(Role.USER)
                     .profileImageName("default.png")
                     .build();
@@ -82,39 +86,49 @@ public class KakaoService {
             userRepository.save(newUser);
 
             issueTempToken(newUser, response);
-            System.out.println("providerUserId = " + providerUserId);
-            System.out.println("optionalUser = " + optionalUser.isPresent());
-            System.out.println("clientId="+clientId);
-            System.out.println("redirectUri"+redirectUri);
             response.sendRedirect(frontendUrl + "/signup");
         }
     }
     private String getKakaoAccessToken(String code) {
-        System.out.println("보낼 인가 코드: " + code);
+        System.out.println("========= [DEBUG] 카카오 토큰 요청 시작 =========");
+        System.out.println("인가 코드: " + code);
+        System.out.println("Redirect URI: " + redirectUri);
+
         RestTemplate restTemplate = new RestTemplate();
 
+        // 1. 헤더 설정 (반드시 FORM_URLENCODED)
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        headers.add("Accept", "application/json");
+
+        // 2. 파라미터 설정 (순서를 카카오 가이드에 맞게 조정)
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("client_secret", clientSecret);
         params.add("grant_type", "authorization_code");
         params.add("client_id", clientId);
         params.add("redirect_uri", redirectUri);
         params.add("code", code);
+        params.add("client_secret", clientSecret); // 보안 설정 ON인 경우 필수
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
 
-        HttpEntity<MultiValueMap<String, String>> request =
-                new HttpEntity<>(params, headers);
+        try {
+            ResponseEntity<Map> response = restTemplate.postForEntity(
+                    "https://kauth.kakao.com/oauth/token",
+                    request,
+                    Map.class
+            );
 
-        ResponseEntity<Map> response = restTemplate.postForEntity(
-                "https://kauth.kakao.com/oauth/token",
-                request,
-                Map.class
-        );
+            System.out.println("========= [DEBUG] 카카오 응답 성공 =========");
+            return (String) response.getBody().get("access_token");
 
-        return (String) response.getBody().get("access_token");
+        } catch (org.springframework.web.client.HttpClientErrorException e) {
+            // 🚨 여기서 401의 진짜 이유(KOE006 등)가 출력됩니다!
+            System.err.println("========= [ERROR] 카카오 토큰 발급 실패 =========");
+            System.err.println("상태 코드: " + e.getStatusCode());
+            System.err.println("에러 본문: " + e.getResponseBodyAsString());
+            throw e;
+        }
     }
-
     private Map getKakaoUserInfo(String accessToken) {
 
         RestTemplate restTemplate = new RestTemplate();

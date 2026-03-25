@@ -10,7 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.Value;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.boogle.service.NaverService;
@@ -25,7 +25,8 @@ public class NaverOAuthController {
     private final NaverService naverService;
     private final NaverProperties naverProperties;
     private final CookieUtil cookieUtil;
-
+    @Value("${app.frontend-url:/}")
+    private String frontendUrl;
     @GetMapping("/oauth/naver/callback")
     public void naverCallback(@RequestParam String code,
                               HttpServletRequest request,
@@ -49,6 +50,8 @@ public class NaverOAuthController {
     public void kakaoLogout(HttpServletResponse response) throws IOException {
         cookieUtil.deleteAccessTokenCookie(response);
         cookieUtil.deleteRefreshTokenCookie(response);
-        response.sendRedirect("http://localhost:5173/"); // 일단 로컬 프론트 경로로
+
+        // 하드코딩 대신 주입받은 변수 사용
+        response.sendRedirect(frontendUrl);
     }
 }
