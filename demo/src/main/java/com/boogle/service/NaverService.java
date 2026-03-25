@@ -128,7 +128,7 @@ public class NaverService {
             // 정상 기존 유저는 메인으로
             String accessToken = jwtProvider.createAccessToken(user.getId(), user.getNickname(), user.getRole());
             cookieUtil.addAccessTokenCookie(response, accessToken);
-            response.sendRedirect(frontendUrl + "/main");
+            response.sendRedirect(frontendUrl + "/");
 
         } else {
             // 1. 신규 유저 DB 한 줄 파기 (가입 찌꺼기 방지용)

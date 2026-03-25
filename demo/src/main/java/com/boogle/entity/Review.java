@@ -1,14 +1,16 @@
 package com.boogle.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PUBLIC)
 @Table(name = "REVIEWS",
         indexes = {
                 @Index(name = "idx_review_cafe", columnList = "cafe_id"),

@@ -34,14 +34,18 @@ public class ReviewService {
         Cafe cafe = cafeRepository.findById(dto.getCafeId())
                 .orElseThrow(() -> new IllegalArgumentException("카페를 찾을 수 없습니다."));
 
-        Review review = new Review();
-        review.setUser(user);
-        review.setCafe(cafe);
-        review.setOutletScore(dto.getOutletScore());
-        review.setSeatScore(dto.getSeatScore());
-        review.setNoiseScore(dto.getNoiseScore());
-        review.setToiletScore(dto.getToiletScore());
-        review.setWifiScore(dto.getWifiScore());
+        // 카페 id기준 리뷰 저장
+        Review review = Review.builder()
+                .user(user)
+                .cafe(cafe)
+                .shortReview(dto.getShortReview())
+                .imageName(dto.getImageName())
+                .toiletScore(dto.getToiletScore())
+                .outletScore(dto.getOutletScore())
+                .seatScore(dto.getSeatScore())
+                .wifiScore(dto.getWifiScore())
+                .noiseScore(dto.getNoiseScore())
+                .build();
 
         // 이미지 파일 처리
         if (image != null && !image.isEmpty()) {
