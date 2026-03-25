@@ -1,10 +1,14 @@
 package com.boogle.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Entity
+@NoArgsConstructor(access = AccessLevel.PUBLIC) // 추후 PROTECTED로 변경해야함
 @Table(
         name = "USER_WISHLIST",
         uniqueConstraints = {
@@ -14,7 +18,7 @@ import java.time.LocalDateTime;
                 )
         }
 )
-public class UserWishlist {
+public class Wishlist {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,6 +38,12 @@ public class UserWishlist {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+    }
+
+    @Builder
+    public Wishlist(User user, Cafe cafe) {
+        this.user = user;
+        this.cafe = cafe;
     }
 }
 

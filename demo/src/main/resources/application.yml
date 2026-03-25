@@ -1,29 +1,10 @@
 spring:
-  config:
-    import: optional:classpath:secret.properties
-
+  profiles:
+    active: dev # 로컬 실행 시 기본값
   application:
-    name: demo
-
-  datasource:
-    url: jdbc:h2:file:./data/testdb
-    driver-class-name: org.h2.Driver
-    username: sa
-    password:
-
-  jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-      format_sql: true
-
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
+    name: boogle
+  config:
+    import: "optional:classpath:secret-${spring.profiles.active}.properties"
 
 jwt:
   secret: ${JWT_SECRET}
@@ -32,7 +13,9 @@ jwt:
 
 kakao:
   client-id: ${KAKAO_CLIENT_ID}
+  client-secret: ${KAKAO_CLIENT_SECRET}
   redirect-uri: ${KAKAO_REDIRECT_URI}
+  logout-redirect-uri: ${KAKAO_LOGOUT_REDIRECT_URI}
 
 naver:
   client-id: ${NAVER_CLIENT_ID}

@@ -44,6 +44,9 @@ dependencies {
 
     // @Valid 사용하기위한 의존성
     implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    //swagger
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 }
 
 tasks.named('test') {
