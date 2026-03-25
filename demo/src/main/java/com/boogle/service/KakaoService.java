@@ -90,7 +90,7 @@ public class KakaoService {
         }
     }
     private String getKakaoAccessToken(String code) {
-
+        System.out.println("보낼 인가 코드: " + code);
         RestTemplate restTemplate = new RestTemplate();
 
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
