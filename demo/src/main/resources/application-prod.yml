@@ -4,8 +4,7 @@ server:
     context-path: /boogle
 
 app:
-  frontend-url: https://cafeboogle-frontend.vercel.app
-
+  frontend-url: https://boogle-frontend3.vercel.app
 spring:
   datasource:
     url: jdbc:h2:file:/home/ubuntu/app/data/testdb;AUTO_SERVER=TRUE
