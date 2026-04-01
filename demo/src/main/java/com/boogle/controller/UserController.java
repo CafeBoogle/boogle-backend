@@ -10,8 +10,10 @@ import com.boogle.util.JwtProvider;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -54,12 +56,25 @@ public class UserController {
     }
 
     // UserController.java
+//    @GetMapping("/user/me")
+//    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal Long userId) {
+//        // SecurityContextHolder에서 인증된 userId를 가져옴
+//        return userRepository.findById(userId)
+//                .map(user -> ResponseEntity.ok(user)) // 프론트의 User interface와 구조 맞춰서 반환
+//                .orElse(ResponseEntity.status(401).build());
+//    }
+
+
     @GetMapping("/user/me")
     public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal Long userId) {
-        // SecurityContextHolder에서 인증된 userId를 가져옴
+
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
         return userRepository.findById(userId)
-                .map(user -> ResponseEntity.ok(user)) // 프론트의 User interface와 구조 맞춰서 반환
-                .orElse(ResponseEntity.status(401).build());
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
     @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
