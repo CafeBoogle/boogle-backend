@@ -40,7 +40,7 @@ public class User implements UserDetails {
     @Column(name = "provider_user_id", nullable = false, length = 100)
     private String providerUserId;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = true, unique = true)
     private String nickname;
 
     @Enumerated(EnumType.STRING)

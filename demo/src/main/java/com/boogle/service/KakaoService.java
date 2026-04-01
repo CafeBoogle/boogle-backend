@@ -6,7 +6,12 @@ import com.boogle.entity.type.Role;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.PropertySource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -32,17 +37,37 @@ public class KakaoService {
     private String redirectUri;
     @Value("${kakao.client-secret}")
     private String clientSecret;
+
+
+    @Autowired
+    private Environment env;
+
     @PostConstruct
-    public void debugConfig() {
-        System.out.println("========== KAKAO CONFIG ==========");
-        System.out.println("clientId = " + clientId);
-        System.out.println("redirectUri = " + redirectUri);
-        System.out.println("==================================");
+    public void whereIsMyPropertyFrom() {
+        ConfigurableEnvironment ce = (ConfigurableEnvironment) env;
+
+        System.out.println("===== PROPERTY SOURCE TRACE =====");
+        for (PropertySource<?> ps : ce.getPropertySources()) {
+            if (ps.containsProperty("kakao.redirect-uri")
+                    || ps.containsProperty("KAKAO_REDIRECT_URI")) {
+
+                System.out.println("✅ FOUND IN: " + ps.getName());
+                System.out.println("   kakao.redirect-uri = "
+                        + ps.getProperty("kakao.redirect-uri"));
+                System.out.println("   KAKAO_REDIRECT_URI = "
+                        + ps.getProperty("KAKAO_REDIRECT_URI"));
+            }
+        }
+        System.out.println("=================================");
     }
+
+
+
 
     private final UserRepository userRepository;
     private final JwtProvider jwtProvider;
     private final CookieUtil cookieUtil;
+
     public void login(String code, HttpServletResponse response) throws IOException {
 
         // 1️⃣ 카카오 access token 발급
