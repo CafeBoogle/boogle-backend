@@ -5,11 +5,16 @@ server:
 
 app:
   frontend-url: https://boogle-frontend3.vercel.app
+
 spring:
   datasource:
     url: jdbc:h2:file:/home/ubuntu/app/data/testdb;AUTO_SERVER=TRUE
     driver-class-name: org.h2.Driver
     username: sa
+
+  config:
+    import: classpath:secret-prod.properties
+
   jpa:
     hibernate:
       ddl-auto: update

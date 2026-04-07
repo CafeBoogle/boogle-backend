@@ -36,8 +36,10 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/api/oauth/**",
+                                "/boogle/api/oauth/**",
                                 "/h2-console/**",
                                 "/v3/api-docs/**",
+                                "/api/user/me",
                                 "/api/signup",
                                 "/cafes/within_bounds", "/api/cafes/**"
                         ).permitAll()
@@ -58,7 +60,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173")); // 프론트 주소
+
+        config.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                "https://boogle-frontend3.vercel.app"
+        ));
+
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true); // 쿠키 허용 핵심!

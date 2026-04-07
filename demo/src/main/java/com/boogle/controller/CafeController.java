@@ -21,7 +21,7 @@ public class CafeController {
     private final WishlistService wishlistService;
 
     // 카페 목록에서 카페 클릭 시 우리 DB로 저장하는 메서드
-    @PostMapping("/cafes")
+    @PostMapping("/cafes/save")
     public ResponseEntity<Long> checkAndSaveCafe(@Valid @RequestBody CafeSaveRequestDto dto) {
         // Db확인 및 저장 후 우리측 DB에서 ID(고유식별자)를 받음
         Long saveCafeId = cafeService.getOrCreateCafe(dto);

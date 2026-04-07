@@ -23,6 +23,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
+        String uri = request.getRequestURI();
+
+        if (uri.startsWith("/boogle/api/oauth")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+
         String token = null;
 
         if (request.getCookies() != null) {
