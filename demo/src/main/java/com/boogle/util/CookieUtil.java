@@ -36,15 +36,22 @@ public class CookieUtil {
     public void deleteAccessTokenCookie(HttpServletResponse response) {
         Cookie cookie = new Cookie(ACCESS_TOKEN_COOKIE, null);
         cookie.setPath("/");
-        cookie.setMaxAge(0);
+        cookie.setDomain("moonsunpower.com"); // 👈 생성할 때와 동일한 도메인 추가!
+        cookie.setHttpOnly(true);             // 생성 시 설정했다면 삭제 시에도 맞추는 게 안전함
+        cookie.setSecure(true);
+        cookie.setAttribute("SameSite", "None");
+        cookie.setMaxAge(0);                  // 즉시 만료
         response.addCookie(cookie);
     }
 
     public void deleteRefreshTokenCookie(HttpServletResponse response) {
         Cookie cookie = new Cookie(REFRESH_TOKEN_COOKIE, null);
         cookie.setPath("/");
-        cookie.setMaxAge(0);
+        cookie.setDomain("moonsunpower.com"); // 👈 생성할 때와 동일한 도메인 추가!
+        cookie.setHttpOnly(true);
+        cookie.setSecure(true);
+        cookie.setAttribute("SameSite", "None");
+        cookie.setMaxAge(0);                  // 즉시 만료
         response.addCookie(cookie);
     }
-
 }
