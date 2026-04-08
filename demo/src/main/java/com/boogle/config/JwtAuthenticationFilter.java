@@ -18,18 +18,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final JwtProvider jwtProvider;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String uri = request.getServletPath();
+
+        return uri.startsWith("/boogle/swagger-ui")
+                || uri.startsWith("/boogle/swagger-ui.html")
+                || uri.startsWith("/boogle/v3/api-docs")
+                || uri.startsWith("/webjars/")
+                || uri.startsWith("/boogle/api/oauth")
+                || uri.startsWith("/h2-console");
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
-
-        String uri = request.getRequestURI();
-
-        if (uri.startsWith("/boogle/api/oauth")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
-
 
         String token = null;
 
@@ -43,18 +47,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (token != null && jwtProvider.validateToken(token)) {
             Long userId = jwtProvider.getUserId(token);
-            // Role 정보도 토큰에서 가져올 수 있다면 넣어주는 게 좋습니다.
-            // 예: List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"));
 
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(
                             userId,
                             null,
-                            Collections.emptyList() // null 대신 빈 리스트라도 넣어주세요
+                            Collections.emptyList()
                     );
 
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+            SecurityContextHolder.getContext()
+                    .setAuthentication(authentication);
         }
+
         filterChain.doFilter(request, response);
     }
 }

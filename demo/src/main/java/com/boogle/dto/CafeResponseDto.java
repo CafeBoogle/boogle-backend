@@ -17,7 +17,4 @@ public class CafeResponseDto {
     private Double longitude; // 경도(경찰과 도둑 아님 X)
     private String thumbnail; // 카페 대표 이미지 URL
     private String kakaoPlaceId; // 카카오맵에서 카페 고유 id
-
-    // 추가로 평점, 리뷰 등 넣어도 될듯
-
 }
