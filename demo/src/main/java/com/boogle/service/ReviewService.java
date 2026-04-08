@@ -1,5 +1,7 @@
 package com.boogle.service;
 
+import com.boogle.dto.CafeScoreResopnseDto;
+import com.boogle.dto.projection.CafeScoreProjection;
 import com.boogle.dto.request.ReviewRequest;
 import com.boogle.entity.Cafe;
 import com.boogle.entity.Review;
@@ -7,13 +9,14 @@ import com.boogle.entity.User;
 import com.boogle.repository.CafeRepository;
 import com.boogle.repository.ReviewRepository;
 import com.boogle.repository.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -63,5 +66,27 @@ public class ReviewService {
         }
 
         return reviewRepository.save(review).getId();
+    }
+
+    // 리뷰가 있을 때 평균내기
+    @Transactional(readOnly = true)
+    public CafeScoreResopnseDto getCafeScore(Long cafeId) {
+
+        CafeScoreProjection p = reviewRepository.findCafeScoreAverages(cafeId);
+
+        return CafeScoreResopnseDto.builder()
+                .cafeId(cafeId)
+                .toiletScoreAvg(p.toiletScoreAvg())
+                .outletScoreAvg(p.outletScoreAvg())
+                .seatScoreAvg(p.seatScoreAvg())
+                .wifiScoreAvg(p.wifiScoreAvg())
+                .noiseScoreAvg(p.noiseScoreAvg())
+                .reviewCount(p.reviewCount().intValue())
+                .build();
+    }
+
+    // 리뷰가 없을 때
+    private Double defaultZero(Double value) {
+        return value == null ? 0.0 : value;
     }
 }
