@@ -17,4 +17,5 @@ public class CafeResponseDto {
     private Double longitude; // 경도(경찰과 도둑 아님 X)
     private String thumbnail; // 카페 대표 이미지 URL
     private String kakaoPlaceId; // 카카오맵에서 카페 고유 id
+    private CafeScoreResopnseDto score;
 }

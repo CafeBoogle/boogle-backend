@@ -36,7 +36,6 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/webjars/**",
                                 "/webjars/**",
-
                                 "/api/oauth/**",
                                 "/boogle/api/oauth/**",
                                 "/h2-console/**",

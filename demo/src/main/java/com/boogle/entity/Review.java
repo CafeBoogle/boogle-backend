@@ -58,6 +58,9 @@ public class Review {
     @Column(nullable = false)
     private Integer noiseScore;
 
+    @Column(nullable = false)
+    private Integer openTimeScore; // 추가
+
     // 시간
 
     @Column(nullable = false, updatable = false)

@@ -17,7 +17,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
-    @Value("${file.upload-dir}")
+    @Value("${file.upload-dir.profile}")
     private String uploadPath;
     @Transactional
     public User updateNickname(Long userId, String nickname) {

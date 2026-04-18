@@ -6,6 +6,7 @@ public record CafeScoreProjection(
         Double seatScoreAvg,
         Double wifiScoreAvg,
         Double noiseScoreAvg,
+        Double openTimeScoreAvg,
         Long reviewCount
 
 ){}

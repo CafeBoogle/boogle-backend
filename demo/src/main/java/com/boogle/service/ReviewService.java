@@ -10,6 +10,7 @@ import com.boogle.repository.CafeRepository;
 import com.boogle.repository.ReviewRepository;
 import com.boogle.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,8 +28,8 @@ public class ReviewService {
     private final UserRepository userRepository;
     private final CafeRepository cafeRepository;
 
-    // 로컬 저장 경로 (실제 경로로 수정 필요)
-    private final String uploadPath = "C:/uploads/reviews/";
+    @Value("${file.upload-dir.review}")
+    private String uploadPath;
 
     @Transactional
     public Long saveReview(ReviewRequest dto, MultipartFile image, Long userId) {
@@ -48,6 +49,7 @@ public class ReviewService {
                 .seatScore(dto.getSeatScore())
                 .wifiScore(dto.getWifiScore())
                 .noiseScore(dto.getNoiseScore())
+                .openTimeScore(dto.getOpenTimeScore())
                 .build();
 
         // 이미지 파일 처리
@@ -81,6 +83,7 @@ public class ReviewService {
                 .seatScoreAvg(p.seatScoreAvg())
                 .wifiScoreAvg(p.wifiScoreAvg())
                 .noiseScoreAvg(p.noiseScoreAvg())
+                .openTimeScoreAvg(defaultZero(p.openTimeScoreAvg()))
                 .reviewCount(p.reviewCount().intValue())
                 .build();
     }

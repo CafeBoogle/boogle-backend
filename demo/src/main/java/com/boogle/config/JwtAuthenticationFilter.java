@@ -19,14 +19,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        String uri = request.getServletPath();
+        String uri = request.getRequestURI();
 
         return uri.startsWith("/boogle/swagger-ui")
                 || uri.startsWith("/boogle/swagger-ui.html")
                 || uri.startsWith("/boogle/v3/api-docs")
                 || uri.startsWith("/webjars/")
                 || uri.startsWith("/boogle/api/oauth")
-                || uri.startsWith("/h2-console");
+                || uri.startsWith("/h2-console")
+                || uri.endsWith("/favicon.ico");
     }
 
     @Override
