@@ -16,5 +16,5 @@ public class CafeScoreResopnseDto {
     private Double seatScoreAvg;
     private Double wifiScoreAvg;
     private Double noiseScoreAvg;
-    private Double openTimeScoreAvg;
+    private Double studyScoreAvg;
 }

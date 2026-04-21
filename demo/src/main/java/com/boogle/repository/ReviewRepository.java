@@ -18,33 +18,46 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     // 특정 사용자가 작성한 리뷰 조회
     List<Review> findByUserIdOrderByCreatedAtDesc(Long userId);
 
+
+
     @Query("""
-            SELECT new com.boogle.dto.projection.CafeScoreProjection(
-                    AVG(r.toiletScore),
-                    AVG(r.outletScore),
-                    AVG(r.seatScore),
-                    AVG(r.wifiScore),
-                    AVG(r.noiseScore),
-                    AVG(r.openTimeScore),
-                    COUNT(r)
-                )
-                FROM Review r
-                WHERE r.cafe.id = :cafeId
-            """)
-    CafeScoreProjection findCafeScoreAverages(@Param("cafeId") Long cafeId);
+    SELECT new com.boogle.dto.projection.CafeScoreProjection(
+        r.cafe.id,
+        AVG(r.toiletScore),
+        AVG(r.outletScore),
+        AVG(r.seatScore),
+        AVG(r.wifiScore),
+        AVG(r.noiseScore),
+        AVG(r.studyScore),
+        COUNT(r.id)
+    )
+    FROM Review r
+    WHERE r.cafe.id = :cafeId
+    GROUP BY r.cafe.id
+""")
+    CafeScoreProjection findCafeScoreByCafeId(
+            @Param("cafeId") Long cafeId
+    );
+
+
 
     @Query("""
             SELECT new com.boogle.dto.projection.CafeScoreProjection(
-                    AVG(r.toiletScore),
-                    AVG(r.outletScore),
-                    AVG(r.seatScore),
-                    AVG(r.wifiScore),
-                    AVG(r.noiseScore),
-                    AVG(r.openTimeScore),
-                    COUNT(r)
-                )
-                FROM Review r
-                GROUP BY r.cafe.id
-            """)
-    List<CafeScoreProjection> findAllCafeAverages();
+                r.cafe.id,
+                AVG(r.toiletScore),
+                AVG(r.outletScore),
+                AVG(r.seatScore),
+                AVG(r.wifiScore),
+                AVG(r.noiseScore),
+                AVG(r.studyScore),
+                COUNT(r.id)
+            )
+            FROM Review r
+            WHERE r.cafe.id IN :cafeIds
+            GROUP BY r.cafe.id
+        """)
+    List<CafeScoreProjection> findCafeScoresByCafeIds(
+            @Param("cafeIds") List<Long> cafeIds
+    );
+
 }

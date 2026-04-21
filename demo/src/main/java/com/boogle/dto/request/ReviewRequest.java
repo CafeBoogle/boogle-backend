@@ -20,5 +20,5 @@ public class ReviewRequest {
     private Integer seatScore;
     private Integer wifiScore;
     private Integer noiseScore;
-    private Integer openTimeScore;
+    private Integer studyScore;
 }

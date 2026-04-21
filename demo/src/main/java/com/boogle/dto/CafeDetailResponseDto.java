@@ -22,4 +22,7 @@ public class CafeDetailResponseDto {
     
     // 리뷰 점수
     private CafeScoreResopnseDto score;
+
+    // 태그
+    private List<String> tags;
 }
