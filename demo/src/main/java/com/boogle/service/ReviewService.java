@@ -49,7 +49,7 @@ public class ReviewService {
                 .seatScore(dto.getSeatScore())
                 .wifiScore(dto.getWifiScore())
                 .noiseScore(dto.getNoiseScore())
-                .openTimeScore(dto.getOpenTimeScore())
+                .studyScore(dto.getStudyScore())
                 .build();
 
         // 이미지 파일 처리
@@ -74,7 +74,21 @@ public class ReviewService {
     @Transactional(readOnly = true)
     public CafeScoreResopnseDto getCafeScore(Long cafeId) {
 
-        CafeScoreProjection p = reviewRepository.findCafeScoreAverages(cafeId);
+        CafeScoreProjection p = reviewRepository.findCafeScoreByCafeId(cafeId);
+
+        // 리뷰가 없는 경우
+        if (p == null) {
+            return CafeScoreResopnseDto.builder()
+                    .cafeId(cafeId)
+                    .toiletScoreAvg(0.0)
+                    .outletScoreAvg(0.0)
+                    .seatScoreAvg(0.0)
+                    .wifiScoreAvg(0.0)
+                    .noiseScoreAvg(0.0)
+                    .studyScoreAvg(0.0)
+                    .reviewCount(0)
+                    .build();
+        }
 
         return CafeScoreResopnseDto.builder()
                 .cafeId(cafeId)
@@ -83,7 +97,7 @@ public class ReviewService {
                 .seatScoreAvg(p.seatScoreAvg())
                 .wifiScoreAvg(p.wifiScoreAvg())
                 .noiseScoreAvg(p.noiseScoreAvg())
-                .openTimeScoreAvg(defaultZero(p.openTimeScoreAvg()))
+                .studyScoreAvg(defaultZero(p.studyScoreAvg()))
                 .reviewCount(p.reviewCount().intValue())
                 .build();
     }

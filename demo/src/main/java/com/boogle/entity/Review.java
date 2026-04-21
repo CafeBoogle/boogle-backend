@@ -59,7 +59,7 @@ public class Review {
     private Integer noiseScore;
 
     @Column(nullable = false)
-    private Integer openTimeScore; // 추가
+    private Integer studyScore; // 추가
 
     // 시간
 

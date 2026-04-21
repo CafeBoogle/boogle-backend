@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,4 +20,6 @@ public class CafeResponseDto {
     private String thumbnail; // 카페 대표 이미지 URL
     private String kakaoPlaceId; // 카카오맵에서 카페 고유 id
     private CafeScoreResopnseDto score;
+
+    private List<String> tags;
 }

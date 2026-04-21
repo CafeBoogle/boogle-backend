@@ -11,7 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -21,20 +23,39 @@ public class CafeService {
     private final CafeRepository cafeRepository;
     private final ReviewService reviewService;
 
+    private static final double TAG_THRESHOLD = 3.5;
     // 카카오맵 범위 내에 있는 카페를 목록화
     public List<CafeResponseDto> findCafesWithinBounds(Double minLat, Double maxLat, Double minLng, Double maxLng) {
         List<Cafe> cafes = cafeRepository.findByLatitudeBetweenAndLongitudeBetween(minLat, maxLat, minLng, maxLng);
 
         // Entity를 Dto로 변환
-        return cafes.stream().map(cafe -> CafeResponseDto.builder()
-                .id(cafe.getId())
-                .name(cafe.getName())
-                .address(cafe.getAddress())
-                .latitude(cafe.getLatitude())
-                .longitude(cafe.getLongitude())
-                .thumbnail(cafe.getImageName())
-                .build())
-                .collect(Collectors.toList());
+//        return cafes.stream().map(cafe -> CafeResponseDto.builder()
+//                .id(cafe.getId())
+//                .name(cafe.getName())
+//                .address(cafe.getAddress())
+//                .latitude(cafe.getLatitude())
+//                .longitude(cafe.getLongitude())
+//                .thumbnail(cafe.getImageName())
+//                .build())
+//                .collect(Collectors.toList());
+
+        return cafes.stream().map(cafe -> {
+
+            CafeScoreResopnseDto score = reviewService.getCafeScore(cafe.getId());
+
+            List<String> tags = generateTags(score);
+
+            return CafeResponseDto.builder()
+                    .id(cafe.getId())
+                    .name(cafe.getName())
+                    .address(cafe.getAddress())
+                    .latitude(cafe.getLatitude())
+                    .longitude(cafe.getLongitude())
+                    .thumbnail(cafe.getImageName())
+                    .score(score)
+                    .tags(tags)
+                    .build();
+        }).collect(Collectors.toList());
 
     }
 
@@ -50,6 +71,29 @@ public class CafeService {
         // 우리 DB에 저장된 고유식별자(ID)를 프론트로 넘김
         return cafe.getId();
     }
+
+    @Transactional(readOnly = true)
+    public Map<String, CafeResponseDto> findCafesByKakaoIds(List<String> kakaoIds) {
+        List<Cafe> cafes = cafeRepository.findByKakaoPlaceIdIn(kakaoIds);
+
+        return cafes.stream().collect(Collectors.toMap(
+                Cafe::getKakaoPlaceId,
+                cafe -> {
+                    CafeScoreResopnseDto dto = reviewService.getCafeScore(cafe.getId());
+
+                    return CafeResponseDto.builder()
+                            .id(cafe.getId())
+                            .kakaoPlaceId(cafe.getKakaoPlaceId())
+                            .name(cafe.getName())
+                            .address(cafe.getAddress())
+                            .latitude(cafe.getLatitude())
+                            .longitude(cafe.getLongitude())
+                            .score(dto)
+                            .tags(generateTags(dto))
+                            .build();
+                }
+        ));
+    }
     
     // 카페 상세와 그래프 점수 통합
     @Transactional(readOnly = true)
@@ -58,6 +102,7 @@ public class CafeService {
                 .orElseThrow(() -> new IllegalArgumentException("카페가 존재하지 않습니다."));
 
         CafeScoreResopnseDto scores = reviewService.getCafeScore(cafeId);
+        List<String> tags = generateTags(scores);
 
         return CafeDetailResponseDto.builder()
                 .id(cafe.getId())
@@ -69,6 +114,7 @@ public class CafeService {
                 .contact(cafe.getContact())
                 .placeId(cafe.getKakaoPlaceId())
                 .score(scores)
+                .tags(tags)
                 .build();
     }
 
@@ -113,7 +159,7 @@ public class CafeService {
         if (tags.contains("seat"))     sum += nvl(s.getSeatScoreAvg());
         if (tags.contains("wifi"))     sum += nvl(s.getWifiScoreAvg());
         if (tags.contains("noise"))    sum += nvl(s.getNoiseScoreAvg());
-        if (tags.contains("openTime")) sum += nvl(s.getOpenTimeScoreAvg());
+        if (tags.contains("study")) sum += nvl(s.getStudyScoreAvg());
         return sum;
     }
 
@@ -121,7 +167,42 @@ public class CafeService {
     private double calculateAllSum(CafeScoreResopnseDto s) {
         return nvl(s.getToiletScoreAvg()) + nvl(s.getOutletScoreAvg()) +
                 nvl(s.getSeatScoreAvg()) + nvl(s.getWifiScoreAvg()) +
-                nvl(s.getNoiseScoreAvg()) + nvl(s.getOpenTimeScoreAvg());
+                nvl(s.getNoiseScoreAvg()) + nvl(s.getStudyScoreAvg());
+    }
+    
+    private List<String> generateTags(CafeScoreResopnseDto dto) {
+        // 리뷰가 없으면 태그도 없어야함
+        if(dto == null || dto.getReviewCount() == 0) {
+            return List.of();
+        }
+        
+        List<String> tags = new ArrayList<>();
+        
+        if(isOver(dto.getToiletScoreAvg())){
+            tags.add("깨끗한 화장실");
+        }
+        if(isOver(dto.getNoiseScoreAvg())){
+            tags.add("조용한 분위기");
+        }
+        if(isOver(dto.getSeatScoreAvg())){
+            tags.add("충분한 좌석");
+        }
+        if(isOver(dto.getOutletScoreAvg())){
+            tags.add("충분한 콘센트");
+        }
+        if(isOver(dto.getWifiScoreAvg())){
+            tags.add("빠른 와이파이");
+        }
+        if(isOver(dto.getStudyScoreAvg())){
+            tags.add("카공 추천");
+        }
+
+        return tags;
+        
+    }
+    
+    private boolean isOver(Double score) {
+        return score != null && score >= TAG_THRESHOLD;
     }
 
     // Null이면 0.0 반환

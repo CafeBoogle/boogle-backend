@@ -24,6 +24,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "02. Cafe", description = "카페 정보 저장, 조회 및 찜하기 API")
 @RestController
@@ -79,4 +80,13 @@ public class CafeController {
     public ResponseEntity<CafeDetailResponseDto> getCafeDetail(@PathVariable Long cafeId) {
         return ResponseEntity.ok(cafeService.getCafeDetail(cafeId));
     }
+
+
+    @PostMapping("/by-kakao-ids")
+    public Map<String, CafeResponseDto> getCafesByKakaoIds(
+            @RequestBody List<String> kakaoIds
+    ) {
+        return cafeService.findCafesByKakaoIds(kakaoIds);
+    }
+
 }
