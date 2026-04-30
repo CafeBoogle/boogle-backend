@@ -4,6 +4,7 @@ import com.boogle.dto.CafeDetailResponseDto;
 import com.boogle.dto.CafeResponseDto;
 import com.boogle.dto.CafeSaveRequestDto;
 import com.boogle.dto.CafeScoreResopnseDto;
+import com.boogle.dto.projection.CafeListProjection;
 import com.boogle.dto.projection.CafeScoreProjection;
 import com.boogle.entity.Cafe;
 import com.boogle.repository.CafeRepository;
@@ -22,42 +23,33 @@ import java.util.stream.Collectors;
 public class CafeService {
     private final CafeRepository cafeRepository;
     private final ReviewService reviewService;
-
+    // 태그를 나타내는 점수 기준
     private static final double TAG_THRESHOLD = 3.5;
     // 카카오맵 범위 내에 있는 카페를 목록화
     public List<CafeResponseDto> findCafesWithinBounds(Double minLat, Double maxLat, Double minLng, Double maxLng) {
-        List<Cafe> cafes = cafeRepository.findByLatitudeBetweenAndLongitudeBetween(minLat, maxLat, minLng, maxLng);
 
-        // Entity를 Dto로 변환
-//        return cafes.stream().map(cafe -> CafeResponseDto.builder()
-//                .id(cafe.getId())
-//                .name(cafe.getName())
-//                .address(cafe.getAddress())
-//                .latitude(cafe.getLatitude())
-//                .longitude(cafe.getLongitude())
-//                .thumbnail(cafe.getImageName())
-//                .build())
-//                .collect(Collectors.toList());
+        List<CafeListProjection> cafes = cafeRepository.findCafeListWithinBounds(minLat, maxLat, minLng, maxLng);
 
-        return cafes.stream().map(cafe -> {
+        return cafes.stream().map(c -> {
 
-            CafeScoreResopnseDto score = reviewService.getCafeScore(cafe.getId());
+            int reviewCount = c.getReviewCount().intValue();
 
-            List<String> tags = generateTags(score);
+            List<String> tags = reviewCount == 0
+                    ? List.of()
+                    : List.of("리뷰 있음");
 
             return CafeResponseDto.builder()
-                    .id(cafe.getId())
-                    .name(cafe.getName())
-                    .address(cafe.getAddress())
-                    .latitude(cafe.getLatitude())
-                    .longitude(cafe.getLongitude())
-                    .thumbnail(cafe.getImageName())
-                    .score(score)
+                    .id(c.getId())
+                    .name(c.getName())
+                    .address(c.getAddress())
+                    .latitude(c.getLatitude())
+                    .longitude(c.getLongitude())
+                    .thumbnail(c.getThumbnail())
                     .tags(tags)
                     .build();
-        }).collect(Collectors.toList());
-
+        }).toList();
     }
+
 
     // 카페 목록에서 카페를 클릭 시 우리 DB에 저장하는 로직
     @Transactional
@@ -198,7 +190,6 @@ public class CafeService {
         }
 
         return tags;
-        
     }
     
     private boolean isOver(Double score) {

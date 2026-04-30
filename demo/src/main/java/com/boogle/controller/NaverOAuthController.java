@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.Base64;
 
 @Tag(name = "01-1. Naver Auth", description = "네이버 계정을 이용한 로그인 및 로그아웃")
 @RestController
@@ -35,14 +36,21 @@ public class NaverOAuthController {
             @ApiResponse(responseCode = "302", description = "네이버 로그인 페이지로 리다이렉트")
     })
     @GetMapping("/oauth/naver")
-    public void naverLogin(HttpServletResponse response) throws IOException {
-        // 실제 운영 시에는 'random' 대신 유니크한 세션 기반 문자열 생성을 권장합니다.
+    public void naverLogin(
+            @RequestParam(required = false) String redirect,
+            HttpServletResponse response
+    ) throws IOException {
+
+        String encodedState = Base64.getEncoder().encodeToString(
+                (redirect != null ? redirect : frontendUrl).getBytes()
+        );
+
         String naverAuthUrl = "https://nid.naver.com/oauth2.0/authorize"
                 + "?response_type=code"
                 + "&client_id=" + naverProperties.getClientId()
                 + "&redirect_uri=" + naverProperties.getRedirectUri()
-                + "&state=random";
-
+                + "&state=" + encodedState;
+        System.out.println("REAL redirect_uri = " + naverProperties.getRedirectUri());
         response.sendRedirect(naverAuthUrl);
     }
 
@@ -54,11 +62,15 @@ public class NaverOAuthController {
     })
     @GetMapping("/oauth/naver/callback")
     public void naverCallback(
-            @Parameter(description = "네이버에서 발급한 인가 코드", required = true) @RequestParam String code,
+            @Parameter(description = "네이버에서 발급한 인가 코드", required = true)
+            @RequestParam String code,
+            @RequestParam String state,
             HttpServletRequest request,
             HttpServletResponse response) throws IOException {
 
-        naverService.login(code, response);
+        String redirectUrl = new String(Base64.getDecoder().decode(state));
+
+        naverService.login(code, redirectUrl, response);
     }
 
     @Operation(summary = "네이버 로그아웃",
@@ -67,9 +79,25 @@ public class NaverOAuthController {
             @ApiResponse(responseCode = "302", description = "쿠키 삭제 후 프론트엔드 URL로 리다이렉트")
     })
     @GetMapping("/oauth/naver/logout")
-    public void naverLogout(HttpServletResponse response) throws IOException {
+    public void naverLogout(
+            @RequestParam(required = false) String redirect,
+            HttpServletRequest request,
+            HttpServletResponse response) throws IOException {
+
         cookieUtil.deleteAccessTokenCookie(response);
         cookieUtil.deleteRefreshTokenCookie(response);
+
+        String redirectUrl = redirect;
+
+        // redirect 파라미터가 없으면 Origin 헤더 사용
+        if (redirectUrl == null || redirectUrl.isBlank()) {
+            redirectUrl = request.getHeader("Origin");
+        }
+
+        // Origin도 없으면 기본 frontendUrl 사용
+        if (redirectUrl == null || redirectUrl.isBlank()) {
+            redirectUrl = frontendUrl;
+        }
 
         response.sendRedirect(frontendUrl);
     }
