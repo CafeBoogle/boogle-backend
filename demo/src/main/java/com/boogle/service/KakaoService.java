@@ -68,7 +68,7 @@ public class KakaoService {
     private final JwtProvider jwtProvider;
     private final CookieUtil cookieUtil;
 
-    public void login(String code, HttpServletResponse response) throws IOException {
+    public void login(String code, String redirectUrl, HttpServletResponse response) throws IOException {
 
         // 1️⃣ 카카오 access token 발급
         String kakaoAccessToken = getKakaoAccessToken(code);

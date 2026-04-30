@@ -2,6 +2,9 @@ package com.boogle.service;
 
 import com.boogle.entity.User;
 import com.boogle.entity.type.Provider;
+import com.boogle.repository.UserRepository;
+import com.boogle.util.CookieUtil;
+import com.boogle.util.JwtProvider;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,9 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
-import com.boogle.repository.UserRepository;
-import com.boogle.util.CookieUtil;
-import com.boogle.util.JwtProvider;
 
 import java.io.IOException;
 import java.util.Map;
@@ -21,13 +21,14 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class NaverService {
+
     @Value("${app.frontend-url}")
     private String frontendUrl;
 
     @Value("${naver.client-id}")
     private String clientId;
 
-    @Value("${naver.client-secret}") // 1. 시크릿 키 필드 추가
+    @Value("${naver.client-secret}")
     private String clientSecret;
 
     @Value("${naver.redirect-uri}")
@@ -37,18 +38,17 @@ public class NaverService {
     private final JwtProvider jwtProvider;
     private final CookieUtil cookieUtil;
 
-    public void login(String code, HttpServletResponse response) throws IOException {
+    public void login(String code, String redirectUrl, HttpServletResponse response) throws IOException {
 
         RestTemplate restTemplate = new RestTemplate();
 
-        // 인가코드 -> access_token 요청
+        // 1. TOKEN 요청
         MultiValueMap<String, String> tokenParams = new LinkedMultiValueMap<>();
         tokenParams.add("grant_type", "authorization_code");
         tokenParams.add("client_id", clientId);
-        tokenParams.add("client_secret", clientSecret); // 2. 요청 파라미터에 시크릿 추가
+        tokenParams.add("client_secret", clientSecret);
         tokenParams.add("redirect_uri", redirectUri);
         tokenParams.add("code", code);
-        // state 검증이 필요하다면 여기에 state도 추가할 수 있습니다.
 
         HttpHeaders tokenHeaders = new HttpHeaders();
         tokenHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
@@ -62,11 +62,11 @@ public class NaverService {
                 Map.class
         );
 
-        String naverAccessToken  = (String) tokenResponse.getBody().get("access_token");
+        String naverAccessToken = (String) tokenResponse.getBody().get("access_token");
 
-        // access_token -> 사용자 정보 요청
+        // 2. USER INFO 요청
         HttpHeaders userHeaders = new HttpHeaders();
-        userHeaders.setBearerAuth(naverAccessToken );
+        userHeaders.setBearerAuth(naverAccessToken);
 
         HttpEntity<?> userRequest = new HttpEntity<>(userHeaders);
 
@@ -77,73 +77,53 @@ public class NaverService {
                 Map.class
         );
 
-        // NaverService.java 수정 부분
         Map body = userResponse.getBody();
         Map<String, Object> responseMap = (Map<String, Object>) body.get("response");
 
-        String providerUserId = (String) responseMap.get("id"); // 네이버 고유 ID
+        String providerUserId = (String) responseMap.get("id");
         String nicknameFromNaver = (String) responseMap.get("nickname");
 
-        Map naverAccount = (Map) body.get("naver_account");
-        Map profile = naverAccount != null ? (Map) naverAccount.get("profile") : null;
 
-        // DB 조회 또는 회원가입
+        // 3. DB CHECK
+        Optional<User> userOptional =
+                userRepository.findByProviderAndProviderUserId(Provider.NAVER, providerUserId);
 
-//        User user = userRepository
-//                .findByProviderAndProviderUserId(Provider.NAVER, providerUserId)
-//                .orElseGet(() -> {
-//
-//                    User newUser = new User();
-//                    newUser.setProvider(Provider.NAVER);
-//                    newUser.setProviderUserId(providerUserId);
-//                    newUser.setNickname(nickname);
-//                    newUser.setProfileImageName("default.png");
-//
-//                    return userRepository.save(newUser);
-//                });
-//
-//        // JWT 발급
-//        String accessToken = jwtProvider.createAccessToken(user.getId());
-//        String refreshToken = jwtProvider.createRefreshToken(user.getId()); // refreshToken도 같이 발급
-//
-//        // 쿠키 저장
-//        cookieUtil.addAccessTokenCookie(response, accessToken);
-//        cookieUtil.addRefreshTokenCookie(response, refreshToken);
-//
-//        // 프론트로 리다이렉트
-//        response.sendRedirect("http://localhost:3000");
-
-        // 심규 유저는 닉네임 입력 전까지 임시 토큰 발급하는 형식
-        Optional<User> userOptional = userRepository.findByProviderAndProviderUserId(Provider.NAVER, providerUserId);
-
+        // EXISTING USER
         if (userOptional.isPresent()) {
+
             User user = userOptional.get();
 
-            // 닉네임이 null인 경우 (가입 중간에 이탈했던 유저) 처리
+            // signup 필요
             if (user.getNickname() == null) {
-                response.sendRedirect(frontendUrl + "/signup?provider=NAVER&userId=" + providerUserId);
+                response.sendRedirect(
+                        redirectUrl + "/signup?provider=NAVER&userId=" + providerUserId
+                );
                 return;
             }
 
-            // 정상 기존 유저는 메인으로
-            String accessToken = jwtProvider.createAccessToken(user.getId(), user.getNickname(), user.getRole());
+            String accessToken =
+                    jwtProvider.createAccessToken(user.getId(), user.getNickname(), user.getRole());
+
             cookieUtil.addAccessTokenCookie(response, accessToken);
-            response.sendRedirect(frontendUrl + "/");
 
-        } else {
-            // 1. 신규 유저 DB 한 줄 파기 (가입 찌꺼기 방지용)
-            User newUser = User.builder()
-                    .provider(Provider.NAVER)
-                    .providerUserId(providerUserId)
-                    .nickname(null)
-                    .profileImageName("default.png")
-                    .role(com.boogle.entity.type.Role.USER) // Role 위치 확인 필요
-                    .build();
-            userRepository.save(newUser);
-
-            // 2. 중요: 리다이렉트 시 쿼리 스트링으로 정보를 넘겨줌!
-            // 그래야 리액트에서 이 값을 읽어서 최종 가입(/api/signup) 시 백엔드로 다시 보낼 수 있음
-            response.sendRedirect(frontendUrl + "/signup?provider=NAVER&userId=" + providerUserId);
+            response.sendRedirect(redirectUrl + "/");
+            return;
         }
+        User newUser = User.builder()
+                .provider(Provider.NAVER)
+                .providerUserId(providerUserId)
+                .nickname(null)
+                .profileImageName("default.png")
+                .role(com.boogle.entity.type.Role.USER)
+                .build();
+
+        userRepository.save(newUser);
+
+        System.out.println("user saved");
+        System.out.println("REDIRECT -> SIGNUP");
+
+        response.sendRedirect(
+                redirectUrl + "/signup?provider=NAVER&userId=" + providerUserId
+        );
     }
 }

@@ -64,6 +64,7 @@ public class SecurityConfig {
 
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
+                "https://localhost:5173",
                 "https://boogle-frontend3.vercel.app"
         ));
 
