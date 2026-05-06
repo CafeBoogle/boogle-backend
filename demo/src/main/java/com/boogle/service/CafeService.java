@@ -8,6 +8,7 @@ import com.boogle.dto.projection.CafeListProjection;
 import com.boogle.dto.projection.CafeScoreProjection;
 import com.boogle.entity.Cafe;
 import com.boogle.repository.CafeRepository;
+import com.boogle.util.CafeTagGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 public class CafeService {
     private final CafeRepository cafeRepository;
     private final ReviewService reviewService;
+    private final CafeTagGenerator cafeTagGenerator;
     // 태그를 나타내는 점수 기준
     private static final double TAG_THRESHOLD = 3.5;
     // 카카오맵 범위 내에 있는 카페를 목록화
@@ -81,7 +83,7 @@ public class CafeService {
                             .latitude(cafe.getLatitude())
                             .longitude(cafe.getLongitude())
                             .score(dto)
-                            .tags(generateTags(dto))
+                            .tags(cafeTagGenerator.generateTags(dto))
                             .build();
                 }
         ));
@@ -94,7 +96,7 @@ public class CafeService {
                 .orElseThrow(() -> new IllegalArgumentException("카페가 존재하지 않습니다."));
 
         CafeScoreResopnseDto scores = reviewService.getCafeScore(cafeId);
-        List<String> tags = generateTags(scores);
+        List<String> tags = cafeTagGenerator.generateTags(scores);
 
         return CafeDetailResponseDto.builder()
                 .id(cafe.getId())
@@ -160,40 +162,6 @@ public class CafeService {
         return nvl(s.getToiletScoreAvg()) + nvl(s.getOutletScoreAvg()) +
                 nvl(s.getSeatScoreAvg()) + nvl(s.getWifiScoreAvg()) +
                 nvl(s.getNoiseScoreAvg()) + nvl(s.getStudyScoreAvg());
-    }
-    
-    private List<String> generateTags(CafeScoreResopnseDto dto) {
-        // 리뷰가 없으면 태그도 없어야함
-        if(dto == null || dto.getReviewCount() == 0) {
-            return List.of();
-        }
-        
-        List<String> tags = new ArrayList<>();
-        
-        if(isOver(dto.getToiletScoreAvg())){
-            tags.add("깨끗한 화장실");
-        }
-        if(isOver(dto.getNoiseScoreAvg())){
-            tags.add("조용한 분위기");
-        }
-        if(isOver(dto.getSeatScoreAvg())){
-            tags.add("충분한 좌석");
-        }
-        if(isOver(dto.getOutletScoreAvg())){
-            tags.add("충분한 콘센트");
-        }
-        if(isOver(dto.getWifiScoreAvg())){
-            tags.add("빠른 와이파이");
-        }
-        if(isOver(dto.getStudyScoreAvg())){
-            tags.add("카공 추천");
-        }
-
-        return tags;
-    }
-    
-    private boolean isOver(Double score) {
-        return score != null && score >= TAG_THRESHOLD;
     }
 
     // Null이면 0.0 반환
