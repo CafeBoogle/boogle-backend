@@ -1,5 +1,6 @@
 package com.boogle.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -34,7 +35,6 @@ public class Review {
     private Cafe cafe;
 
     // 리뷰 내용
-
     @Column(length = 255)
     private String shortReview;
 

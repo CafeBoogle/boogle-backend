@@ -1,13 +1,13 @@
 package com.boogle.repository;
 
 import com.boogle.dto.projection.CafeScoreProjection;
+import com.boogle.dto.MyReviewResponseDto;
 import com.boogle.entity.Review;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.util.List;
-import java.util.Objects;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
@@ -59,5 +59,25 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<CafeScoreProjection> findCafeScoresByCafeIds(
             @Param("cafeIds") List<Long> cafeIds
     );
+
+    // 유저가 작성한 리뷰 조회
+    @Query("""
+        select new com.boogle.dto.MyReviewResponseDto(
+            r.id,
+            c.id,
+            c.name,
+            c.address,
+            r.shortReview,
+            null
+        )
+        from Review r
+        join r.cafe c
+        where r.user.id = :userId
+        order by r.createdAt desc
+    """)
+    List<MyReviewResponseDto> findMyReviews(@Param("userId") Long userId);
+
+
+
 
 }

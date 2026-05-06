@@ -16,6 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @Tag(name = "03. Review", description = "카페 리뷰 등록 및 관리 API")
 @RestController
 @RequestMapping("/api/reviews")
@@ -71,4 +73,5 @@ public class ReviewController {
             @Parameter(description = "리뷰 고유 ID", example = "1") @PathVariable Long id) {
         return ResponseEntity.ok().build();
     }
+
 }
