@@ -7,7 +7,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ReviewRepository extends JpaRepository<Review, Long> {
@@ -60,24 +65,39 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             @Param("cafeIds") List<Long> cafeIds
     );
 
-    // 유저가 작성한 리뷰 조회
+    // 내가 작성한 리뷰 조회
     @Query("""
-        select new com.boogle.dto.MyReviewResponseDto(
-            r.id,
-            c.id,
-            c.name,
-            c.address,
-            r.shortReview,
-            null
-        )
-        from Review r
-        join r.cafe c
-        where r.user.id = :userId
-        order by r.createdAt desc
+    select
+        r.id,
+        c.id,
+        c.name,
+        c.address,
+        r.shortReview,
+        ri.imageUrl
+    from Review r
+    join r.cafe c
+    left join ReviewImage ri on ri.review.id = r.id
+    where r.user.id = :userId
+    order by r.createdAt desc, ri.sortOrder asc
+""")
+    List<Object[]> findMyReviewsWithImagesRaw(@Param("userId") Long userId);
+
+
+    // 리뷰 삭제
+    Optional<Review> findByIdAndUserId(Long id, Long userId);
+
+    // 리뷰 이미지
+
+    @Query("""
+        select ri.imageUrl
+        from ReviewImage ri
+        where ri.review.cafe.id = :cafeId
+        order by ri.review.createdAt desc, ri.sortOrder asc
     """)
-    List<MyReviewResponseDto> findMyReviews(@Param("userId") Long userId);
-
-
+    List<String> findPreviewReviewImages(
+            @Param("cafeId") Long cafeId,
+            Pageable pageable
+    );
 
 
 }

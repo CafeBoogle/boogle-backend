@@ -20,4 +20,5 @@ public class MyReviewResponseDto {
     private String shortReview;   // 리뷰 내용
     @Setter
     private List<String> tags; // 태그
+    List<String> imageUrls;
 }
