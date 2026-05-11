@@ -5,18 +5,24 @@ import com.boogle.dto.projection.CafeScoreProjection;
 import com.boogle.dto.request.ReviewRequest;
 import com.boogle.entity.Cafe;
 import com.boogle.entity.Review;
+import com.boogle.entity.ReviewImage;
 import com.boogle.entity.User;
 import com.boogle.repository.CafeRepository;
 import com.boogle.repository.ReviewRepository;
 import com.boogle.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -32,7 +38,7 @@ public class ReviewService {
     private String uploadPath;
 
     @Transactional
-    public Long saveReview(ReviewRequest dto, MultipartFile image, Long userId) {
+    public Long saveReview(ReviewRequest dto, List<MultipartFile> images, Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         Cafe cafe = cafeRepository.findById(dto.getCafeId())
@@ -43,7 +49,6 @@ public class ReviewService {
                 .user(user)
                 .cafe(cafe)
                 .shortReview(dto.getShortReview())
-                .imageName(dto.getImageName())
                 .toiletScore(dto.getToiletScore())
                 .outletScore(dto.getOutletScore())
                 .seatScore(dto.getSeatScore())
@@ -53,21 +58,53 @@ public class ReviewService {
                 .build();
 
         // 이미지 파일 처리
-        if (image != null && !image.isEmpty()) {
-            String originalName = image.getOriginalFilename();
-            String uuid = UUID.randomUUID().toString();
-            String savedName = uuid + "_" + originalName;
+        if (images != null && !images.isEmpty()) {
+            int sortOrder = 0;
 
-            try {
-                File saveFile = new File(uploadPath + savedName);
-                image.transferTo(saveFile);
-                review.setImageName(savedName); // DB에는 저장된 파일명 기록
-            } catch (IOException e) {
-                throw new RuntimeException("이미지 저장 실패", e);
+            File dir = new File(uploadPath);
+            if (!dir.exists()) {
+                boolean created = dir.mkdirs();
+                System.out.println("upload dir created: " + created);
+            }
+
+            for (MultipartFile image : images) {
+
+                System.out.println("image name=" + image.getOriginalFilename());
+                System.out.println("image size=" + image.getSize());
+
+                if (image.isEmpty()) continue;
+
+                String saveName = UUID.randomUUID() + "_" + image.getOriginalFilename();
+                File saveFile = new File(dir, saveName);
+
+                System.out.println("saving image to: " + saveFile.getAbsolutePath());
+
+                try {
+                    image.transferTo(saveFile); // ✅ 이거 하나만
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    throw new RuntimeException("이미지 저장 실패", e);
+                }
+
+                ReviewImage reviewImage = ReviewImage.builder()
+                        .review(review)
+                        .imageUrl(saveName)
+                        .sortOrder(sortOrder++)
+                        .build();
+
+                review.getImages().add(reviewImage);
             }
         }
 
-        return reviewRepository.save(review).getId();
+        System.out.println("images is null? " + (images == null));
+        System.out.println("images size = " + (images == null ? "null" : images.size()));
+
+        try {
+            return reviewRepository.save(review).getId();
+        }catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     // 리뷰가 있을 때 평균내기
@@ -106,4 +143,22 @@ public class ReviewService {
     private Double defaultZero(Double value) {
         return value == null ? 0.0 : value;
     }
+
+    // 리뷰 삭제
+    public void deleteReview(Long reviewId, Long userId) {
+        Review review = reviewRepository.findByIdAndUserId(reviewId, userId)
+                .orElseThrow(() -> new IllegalArgumentException("리뷰가 없거나 삭제 권한이 없습니다."));
+
+        reviewRepository.delete(review);
+    }
+
+
+    @Transactional(readOnly = true)
+    public List<String> getPreviewReviewImages(Long cafeId) {
+        return reviewRepository.findPreviewReviewImages(
+                cafeId,
+                PageRequest.of(0, 5) // ✅ 최대 5장
+        );
+    }
+
 }

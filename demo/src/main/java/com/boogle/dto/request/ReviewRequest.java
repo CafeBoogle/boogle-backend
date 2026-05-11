@@ -1,18 +1,15 @@
 package com.boogle.dto.request;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class ReviewRequest {
     private Long cafeId;
     private String shortReview;
-    private String imageName;
 
     // 육각형 차트 점수들
     private Integer toiletScore;

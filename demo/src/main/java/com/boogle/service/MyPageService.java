@@ -7,11 +7,9 @@ import com.boogle.repository.ReviewRepository;
 import com.boogle.util.CafeTagGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,15 +19,47 @@ public class MyPageService {
     private final ReviewRepository reviewRepository;
     private final CafeTagGenerator cafeTagGenerator;
 
+    @Transactional(readOnly = true)
     public List<MyReviewResponseDto> getMyReviews(Long userId) {
 
-        List<MyReviewResponseDto> reviews =
-                reviewRepository.findMyReviews(userId);
+        // 1️⃣ raw 조회 (리뷰 × 이미지)
+        List<Object[]> rows =
+                reviewRepository.findMyReviewsWithImagesRaw(userId);
 
-        if (reviews.isEmpty()) {
-            return reviews;
+        if (rows.isEmpty()) {
+            return List.of();
         }
 
+        // 2️⃣ 리뷰 단위로 묶기
+        Map<Long, MyReviewResponseDto> reviewMap = new LinkedHashMap<>();
+
+        for (Object[] row : rows) {
+            Long reviewId = (Long) row[0];
+
+            reviewMap.computeIfAbsent(reviewId, id ->
+                    new MyReviewResponseDto(
+                            id,                     // review.id
+                            (Long) row[1],          // cafe.id
+                            (String) row[2],        // cafe.name
+                            (String) row[3],        // cafe.address
+                            (String) row[4],        // shortReview
+                            null,                   // tags (아래에서 세팅)
+                            new ArrayList<>()       // imageUrls
+                    )
+            );
+
+            // ✅ 이미지가 있을 때만 추가
+            if (row[5] != null) {
+                reviewMap.get(reviewId)
+                        .getImageUrls()
+                        .add((String) row[5]);
+            }
+        }
+
+        List<MyReviewResponseDto> reviews =
+                new ArrayList<>(reviewMap.values());
+
+        // 3️⃣ 카페별 점수 한 번에 조회
         List<Long> cafeIds = reviews.stream()
                 .map(MyReviewResponseDto::getCafeId)
                 .distinct()
@@ -37,7 +67,6 @@ public class MyPageService {
 
         List<CafeScoreProjection> projections =
                 reviewRepository.findCafeScoresByCafeIds(cafeIds);
-
 
         Map<Long, CafeScoreResopnseDto> scoreMap = new HashMap<>();
 
@@ -55,13 +84,14 @@ public class MyPageService {
                             .studyScoreAvg(p.studyScoreAvg())
                             .build()
             );
-
-
-            reviews.forEach(review -> {
-                CafeScoreResopnseDto score = scoreMap.get(review.getCafeId());
-                review.setTags(cafeTagGenerator.generateTags(score));
-            });
         }
+
+        // 4️⃣ 리뷰마다 태그 세팅
+        for (MyReviewResponseDto review : reviews) {
+            CafeScoreResopnseDto score = scoreMap.get(review.getCafeId());
+            review.setTags(cafeTagGenerator.generateTags(score));
+        }
+
         return reviews;
     }
 }

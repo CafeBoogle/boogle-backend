@@ -98,17 +98,22 @@ public class CafeService {
         CafeScoreResopnseDto scores = reviewService.getCafeScore(cafeId);
         List<String> tags = cafeTagGenerator.generateTags(scores);
 
+        List<String> previewImages =
+                reviewService.getPreviewReviewImages(cafeId);
+
+
+
         return CafeDetailResponseDto.builder()
                 .id(cafe.getId())
                 .name(cafe.getName())
                 .address(cafe.getAddress())
                 .latitude(cafe.getLatitude())
                 .longitude(cafe.getLongitude())
-                .imageName(cafe.getImageName())
                 .contact(cafe.getContact())
                 .placeId(cafe.getKakaoPlaceId())
                 .score(scores)
                 .tags(tags)
+                .reviewImageUrls(previewImages)
                 .build();
     }
 

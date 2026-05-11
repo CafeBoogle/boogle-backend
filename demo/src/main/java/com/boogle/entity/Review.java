@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -12,19 +14,12 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PUBLIC)
-@Table(name = "REVIEWS",
-        indexes = {
-                @Index(name = "idx_review_cafe", columnList = "cafe_id"),
-                @Index(name = "idx_review_user", columnList = "user_id")
-        }
-)
+@Table(name = "REVIEWS")
 public class Review {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    // 관계
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -34,42 +29,30 @@ public class Review {
     @JoinColumn(name = "cafe_id", nullable = false)
     private Cafe cafe;
 
-    // 리뷰 내용
+    // 한줄리뷰
     @Column(length = 255)
     private String shortReview;
 
-    @Column(length = 100)
-    private String imageName;
+    // 이미지 리스트
+    @OneToMany(
+            mappedBy = "review",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true
+    )
+    @Builder.Default
+    private List<ReviewImage> images = new ArrayList<>();
 
-    // 육각형 차트
-
-    @Column(nullable = false)
+    // 점수
     private Integer toiletScore;
-
-    @Column(nullable = false)
     private Integer outletScore;
-
-    @Column(nullable = false)
     private Integer seatScore;
-
-    @Column(nullable = false)
     private Integer wifiScore;
-
-    @Column(nullable = false)
     private Integer noiseScore;
-
-    @Column(nullable = false)
-    private Integer studyScore; // 추가
+    private Integer studyScore;
 
     // 시간
-
-    @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    @Column(nullable = false)
     private LocalDateTime updatedAt;
-
-    // 라이프사이클
 
     @PrePersist
     protected void onCreate() {
