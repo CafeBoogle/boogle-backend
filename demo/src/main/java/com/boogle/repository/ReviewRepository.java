@@ -87,7 +87,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     Optional<Review> findByIdAndUserId(Long id, Long userId);
 
     // 리뷰 이미지
-
     @Query("""
         select ri.imageUrl
         from ReviewImage ri
@@ -98,6 +97,21 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             @Param("cafeId") Long cafeId,
             Pageable pageable
     );
+
+    // 한줄리뷰
+
+    @Query("""
+    select r.shortReview
+    from Review r
+    where r.cafe.id = :cafeId
+      and r.shortReview is not null
+    order by r.createdAt desc
+""")
+    List<String> findShortReviewsByCafeId(
+            @Param("cafeId") Long cafeId,
+            Pageable pageable
+    );
+
 
 
 }
