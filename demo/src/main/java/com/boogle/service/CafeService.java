@@ -101,6 +101,8 @@ public class CafeService {
         List<String> previewImages =
                 reviewService.getPreviewReviewImages(cafeId);
 
+        List<String> shortReviews = reviewService.getCafeShortReviews(cafeId);
+
 
 
         return CafeDetailResponseDto.builder()
@@ -114,6 +116,7 @@ public class CafeService {
                 .score(scores)
                 .tags(tags)
                 .reviewImageUrls(previewImages)
+                .shortReviews(shortReviews)
                 .build();
     }
 

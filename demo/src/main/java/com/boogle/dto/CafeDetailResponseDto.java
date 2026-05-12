@@ -19,6 +19,7 @@ public class CafeDetailResponseDto {
     private Double longitude;
     private String contact;
     private String placeId;
+    private List<String> shortReviews;
     
     // 리뷰 점수
     private CafeScoreResopnseDto score;

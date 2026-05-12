@@ -3,6 +3,9 @@ package com.boogle.controller;
 import com.boogle.dto.MyReviewResponseDto;
 import com.boogle.entity.User;
 import com.boogle.service.MyPageService;
+import com.boogle.service.WishlistService;
+import io.swagger.v3.oas.annotations.Operation;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,10 +21,22 @@ import java.util.List;
 public class MyPageController {
 
     private final MyPageService myPageService;
+    private final WishlistService wishlistService;
 
 
     @GetMapping("/reviews")
     public ResponseEntity<List<MyReviewResponseDto>> myReviews(@AuthenticationPrincipal Long userId) {
         return ResponseEntity.ok(myPageService.getMyReviews(userId));
+    }
+
+    @Operation(summary = "내 찜한 카페 개수 조회")
+    @GetMapping("/wish/count")
+    public ResponseEntity<Long> getWishlistCount(@AuthenticationPrincipal Long userId) {
+        if(userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        Long count = wishlistService.getWishlistCount(userId);
+        return ResponseEntity.ok(count);
     }
 }

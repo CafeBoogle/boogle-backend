@@ -152,13 +152,24 @@ public class ReviewService {
         reviewRepository.delete(review);
     }
 
-
+    // 리뷰 이미지 가져오기
     @Transactional(readOnly = true)
     public List<String> getPreviewReviewImages(Long cafeId) {
         return reviewRepository.findPreviewReviewImages(
                 cafeId,
-                PageRequest.of(0, 5) // ✅ 최대 5장
+                PageRequest.of(0, 20) // 최근 20장
         );
     }
+
+    // 한줄리뷰 가져오기
+
+    @Transactional(readOnly = true)
+    public List<String> getCafeShortReviews(Long cafeId) {
+        return reviewRepository.findShortReviewsByCafeId(
+                cafeId,
+                PageRequest.of(0, 10)
+        );
+    }
+
 
 }
