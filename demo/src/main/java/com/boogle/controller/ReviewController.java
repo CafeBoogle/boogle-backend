@@ -13,8 +13,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -37,31 +39,25 @@ public class ReviewController {
             @ApiResponse(responseCode = "400", description = "실패: 필수 파라미터 누락 또는 잘못된 형식"),
             @ApiResponse(responseCode = "500", description = "실패: 서버 내부 오류 (파일 저장 실패 등)")
     })
+
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> createReview(
-            @RequestPart(value = "data")
-            @Parameter(description = "리뷰 요청 데이터 (JSON 형식)", required = true,
-                    schema = @Schema(implementation = ReviewRequest.class))
-            ReviewRequest request,
-
-            @RequestPart(value = "image", required = false)
-            @Parameter(description = "리뷰 첨부 이미지, 필수는 아님")
-            MultipartFile image
+    public ResponseEntity<Long> createReview(
+            @RequestPart("data") ReviewRequest request,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,
+            @AuthenticationPrincipal Long userId
     ) {
-        try {
-            // TODO: 실제 프로젝트의 인증 로직에 따라 userId를 가져와야 합니다.
-            Long userId = 1L;
 
-            Long reviewId = reviewService.saveReview(request, image, userId);
-
-            return ResponseEntity.status(HttpStatus.CREATED).body(reviewId);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("리뷰 등록 중 오류가 발생했습니다.");
+        if (request.getCafeId() == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "카페를 선택해야 리뷰를 등록할 수 있습니다."
+            );
         }
+
+        Long reviewId = reviewService.saveReview(request, images, userId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(reviewId);
     }
+
 
     @Operation(summary = "리뷰 상세 조회", description = "리뷰의 고유 ID를 이용해 상세 내용을 조회")
     @ApiResponses(value = {
@@ -72,6 +68,15 @@ public class ReviewController {
     public ResponseEntity<?> getReview(
             @Parameter(description = "리뷰 고유 ID", example = "1") @PathVariable Long id) {
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "내가 남긴 리뷰 삭제", description = "리뷰의 고유 ID를 이용해 해당 리뷰 삭제")
+    @DeleteMapping("/delete/{reviewId}")
+    public ResponseEntity<Void> deleteReview(@PathVariable Long reviewId,
+                                             @AuthenticationPrincipal Long userId) {
+
+        reviewService.deleteReview(reviewId, userId);
+        return ResponseEntity.noContent().build();
     }
 
 }

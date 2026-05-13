@@ -12,5 +12,5 @@ public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
     Optional<Wishlist> findByUserAndCafe(User user, Cafe cafe);
 
     // 찜한 갯수 카운트
-    Long countByCafe(Cafe cafe);
+    Long countByUser(User user);
 }

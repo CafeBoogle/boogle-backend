@@ -42,7 +42,9 @@ public class SecurityConfig {
                                 "/v3/api-docs/**",
                                 "/api/user/me",
                                 "/api/signup",
-                                "/cafes/within_bounds", "/api/cafes/**"
+                                "/cafes/within_bounds",
+                                "/api/cafes/**",
+                                "/images/**"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )

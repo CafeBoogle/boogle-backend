@@ -69,6 +69,19 @@ public class CafeController {
         return ResponseEntity.ok(isWish);
     }
 
+    @Operation(summary = "카페 찜 여부 조회")
+    @GetMapping("/{cafeId}/wish")
+    public ResponseEntity<Boolean> isCafeWished(@PathVariable Long cafeId,
+                                                @AuthenticationPrincipal Long userId) {
+
+        if(userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        boolean wished = wishlistService.isCafeWithed(userId, cafeId);
+        return ResponseEntity.ok(wished);
+    }
+
     @Operation(summary = "카페 상세 정보 및 분석 점수 조회",
             description = "특정 카페의 상세 정보(이름, 주소 등)와 리뷰 기반의 그래프 점수 조회")
     @ApiResponses(value = {
