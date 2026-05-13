@@ -63,26 +63,11 @@ public class UserService {
                     if (userRepository.existsByNickname(request.getNickname())) {
                         throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
                     }
-
-                    String fileName = "default.png";
-                    if (request.getProfileImage() != null && !request.getProfileImage().isEmpty()) {
-                        File directory = new File(uploadPath);
-                        if (!directory.exists()) directory.mkdirs();
-
-                        fileName = UUID.randomUUID() + "_" + request.getProfileImage().getOriginalFilename();
-                        try {
-                            File saveFile = new File(directory.getAbsolutePath() + File.separator + fileName);
-                            request.getProfileImage().transferTo(saveFile);
-                        } catch (IOException e) {
-                            throw new RuntimeException("파일 저장 중 오류 발생: " + e.getMessage());
-                        }
-                    }
-
                     return User.builder()
                             .provider(request.getProvider())
                             .providerUserId(request.getProviderUserId())
                             .nickname(request.getNickname())
-                            .profileImageName(fileName)
+                            .profileImageName(request.getCatId())
                             .role(Role.USER)
                             .build();
                 });

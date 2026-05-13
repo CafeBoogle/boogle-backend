@@ -67,7 +67,7 @@ public class UserController {
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
     }
 
-    @PostMapping(value = "/signup", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/signup")
     public ResponseEntity<?> signUp(@ModelAttribute SignUpRequest request, HttpServletResponse response) {
         User user = userService.signUp(request);
 
