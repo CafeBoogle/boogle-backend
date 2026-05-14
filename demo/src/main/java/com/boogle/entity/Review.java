@@ -64,4 +64,21 @@ public class Review {
     protected void onUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    public void update(
+            String shortReview,
+            Integer toiletScore,
+            Integer outletScore,
+            Integer seatScore,
+            Integer wifiScore,
+            Integer noiseScore
+    ) {
+
+        this.shortReview = shortReview;
+        this.toiletScore = toiletScore;
+        this.outletScore = outletScore;
+        this.seatScore = seatScore;
+        this.wifiScore = wifiScore;
+        this.noiseScore = noiseScore;
+    }
 }

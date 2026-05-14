@@ -22,7 +22,7 @@ public class MyPageService {
     @Transactional(readOnly = true)
     public List<MyReviewResponseDto> getMyReviews(Long userId) {
 
-        // 1️⃣ raw 조회 (리뷰 × 이미지)
+        // raw 조회
         List<Object[]> rows =
                 reviewRepository.findMyReviewsWithImagesRaw(userId);
 
@@ -30,7 +30,7 @@ public class MyPageService {
             return List.of();
         }
 
-        // 2️⃣ 리뷰 단위로 묶기
+        // 리뷰 단위로 묶기
         Map<Long, MyReviewResponseDto> reviewMap = new LinkedHashMap<>();
 
         for (Object[] row : rows) {
@@ -44,11 +44,17 @@ public class MyPageService {
                             (String) row[3],        // cafe.address
                             (String) row[4],        // shortReview
                             null,                   // tags (아래에서 세팅)
-                            new ArrayList<>()       // imageUrls
+                            new ArrayList<>(),       // imageUrls
+                            (Integer) row[6],
+                            (Integer) row[7],
+                            (Integer) row[8],
+                            (Integer) row[9],
+                            (Integer) row[10],
+                            (Integer) row[11]
                     )
             );
 
-            // ✅ 이미지가 있을 때만 추가
+            // 이미지가 있을 때만 추가
             if (row[5] != null) {
                 reviewMap.get(reviewId)
                         .getImageUrls()
@@ -59,7 +65,7 @@ public class MyPageService {
         List<MyReviewResponseDto> reviews =
                 new ArrayList<>(reviewMap.values());
 
-        // 3️⃣ 카페별 점수 한 번에 조회
+        // 카페별 점수 한 번에 조회
         List<Long> cafeIds = reviews.stream()
                 .map(MyReviewResponseDto::getCafeId)
                 .distinct()
@@ -86,7 +92,7 @@ public class MyPageService {
             );
         }
 
-        // 4️⃣ 리뷰마다 태그 세팅
+        // 리뷰마다 태그 세팅
         for (MyReviewResponseDto review : reviews) {
             CafeScoreResopnseDto score = scoreMap.get(review.getCafeId());
             review.setTags(cafeTagGenerator.generateTags(score));

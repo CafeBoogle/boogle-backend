@@ -1,5 +1,7 @@
 package com.boogle.controller;
 
+import com.boogle.dto.ReviewDetailResponseDto;
+import com.boogle.dto.ReviewUpdateRequestDto;
 import com.boogle.dto.request.ReviewRequest;
 import com.boogle.service.ReviewService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -78,5 +80,27 @@ public class ReviewController {
         reviewService.deleteReview(reviewId, userId);
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "내가 남긴 리뷰 수정", description = "리뷰 ID, 유저ID를 이용해서 리뷰를 수정")
+    @PatchMapping(value = "/{reviewId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Void> updateReview(
+            @PathVariable Long reviewId,
+            @RequestPart("data") ReviewRequest request,
+            @RequestPart(value = "images", required = false) List<MultipartFile> images,
+            @AuthenticationPrincipal Long userId
+    ) {
+
+        reviewService.updateReview(reviewId, request, images, userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "내가 남긴 리뷰 상세조회", description = "리뷰 ID, 유저ID를 이용해서 리뷰를 조회")
+    @GetMapping("/detail/{reviewId}")
+    public ResponseEntity<ReviewDetailResponseDto> getReviewDetail(
+            @PathVariable Long reviewId
+    ) {
+        return ResponseEntity.ok(reviewService.getReviewDetail(reviewId));
+    }
+
 
 }

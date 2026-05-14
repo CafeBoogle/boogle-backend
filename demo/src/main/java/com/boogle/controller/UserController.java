@@ -52,10 +52,15 @@ public class UserController {
         String accessToken = jwtProvider.createAccessToken(user.getId(), user.getNickname(), user.getRole());
         String refreshToken = jwtProvider.createRefreshToken(user.getId(), user.getNickname(), user.getRole());
 
-        cookieUtil.addAccessTokenCookie(response, accessToken);
         cookieUtil.addRefreshTokenCookie(response, refreshToken);
 
-        return ResponseEntity.ok().body("회원가입이 완료되었습니다.");
+
+        return ResponseEntity.ok().body(
+                java.util.Map.of(
+                        "message", "회원가입이 완료되었습니다.",
+                        "accessToken", accessToken
+                )
+        );
     }
 
     @Operation(summary = "로그아웃", description = "브라우저에 저장된 Access Token 및 Refresh Token 쿠키를 삭제")

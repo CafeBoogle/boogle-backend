@@ -48,6 +48,7 @@ public class JwtProvider {
                 .setSubject(String.valueOf(userId))
                 .claim("nickname", nickname)
                 .claim("type", "refresh")
+                .claim("ROLE", role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpire))
                 .signWith(key, SignatureAlgorithm.HS256)
@@ -75,4 +76,17 @@ public class JwtProvider {
 
         return Long.parseLong(claims.getSubject());
     }
+
+
+    public String getNickname(String token) {
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        return claims.get("nickname", String.class);
+    }
+
+
 }

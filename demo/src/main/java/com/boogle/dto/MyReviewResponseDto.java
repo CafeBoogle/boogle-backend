@@ -21,4 +21,13 @@ public class MyReviewResponseDto {
     @Setter
     private List<String> tags; // 태그
     List<String> imageUrls;
+
+    // 내가 남긴 리뷰 점수
+    private Integer toiletScore;
+    private Integer outletScore;
+    private Integer seatScore;
+    private Integer wifiScore;
+    private Integer noiseScore;
+    private Integer studyScore;
+
 }
