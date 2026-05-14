@@ -23,7 +23,7 @@ public class MyPageController {
     private final MyPageService myPageService;
     private final WishlistService wishlistService;
 
-
+    @Operation(summary = "내가 남긴 리뷰 조회")
     @GetMapping("/reviews")
     public ResponseEntity<List<MyReviewResponseDto>> myReviews(@AuthenticationPrincipal Long userId) {
         return ResponseEntity.ok(myPageService.getMyReviews(userId));
@@ -38,5 +38,15 @@ public class MyPageController {
 
         Long count = wishlistService.getWishlistCount(userId);
         return ResponseEntity.ok(count);
+    }
+
+    @Operation(summary = "찜한 카페 보기")
+    @GetMapping("/wish")
+    public ResponseEntity<?> getMyWishlist(@AuthenticationPrincipal Long userId) {
+        if (userId == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        return ResponseEntity.ok(wishlistService.getMyWishlist(userId));
     }
 }

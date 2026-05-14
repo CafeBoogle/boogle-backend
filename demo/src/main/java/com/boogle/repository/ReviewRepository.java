@@ -4,6 +4,7 @@ import com.boogle.dto.projection.CafeScoreProjection;
 import com.boogle.dto.MyReviewResponseDto;
 import com.boogle.entity.Review;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -73,7 +74,13 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
         c.name,
         c.address,
         r.shortReview,
-        ri.imageUrl
+        ri.imageUrl, 
+        r.toiletScore,
+        r.outletScore,
+        r.seatScore,
+        r.wifiScore,
+        r.noiseScore,
+        r.studyScore
     from Review r
     join r.cafe c
     left join ReviewImage ri on ri.review.id = r.id
@@ -111,7 +118,5 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             @Param("cafeId") Long cafeId,
             Pageable pageable
     );
-
-
 
 }

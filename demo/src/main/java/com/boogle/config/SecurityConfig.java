@@ -44,7 +44,8 @@ public class SecurityConfig {
                                 "/api/signup",
                                 "/cafes/within_bounds",
                                 "/api/cafes/**",
-                                "/images/**"
+                                "/images/**",
+                                "/auth/refresh"
                         ).permitAll()
                         .anyRequest().authenticated()
                 )
@@ -70,7 +71,7 @@ public class SecurityConfig {
                 "https://boogle-frontend3.vercel.app"
         ));
 
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 

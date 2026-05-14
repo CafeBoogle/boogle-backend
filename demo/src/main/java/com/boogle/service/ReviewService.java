@@ -1,6 +1,8 @@
 package com.boogle.service;
 
 import com.boogle.dto.CafeScoreResopnseDto;
+import com.boogle.dto.ReviewDetailResponseDto;
+import com.boogle.dto.ReviewUpdateRequestDto;
 import com.boogle.dto.projection.CafeScoreProjection;
 import com.boogle.dto.request.ReviewRequest;
 import com.boogle.entity.Cafe;
@@ -8,6 +10,7 @@ import com.boogle.entity.Review;
 import com.boogle.entity.ReviewImage;
 import com.boogle.entity.User;
 import com.boogle.repository.CafeRepository;
+import com.boogle.repository.ReviewImageRepository;
 import com.boogle.repository.ReviewRepository;
 import com.boogle.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -31,6 +35,7 @@ import java.util.UUID;
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
+    private final ReviewImageRepository reviewImageRepository;
     private final UserRepository userRepository;
     private final CafeRepository cafeRepository;
 
@@ -172,4 +177,86 @@ public class ReviewService {
     }
 
 
+    // 리뷰 수정
+    @Transactional
+    public void updateReview(Long reviewId, ReviewRequest dto, List<MultipartFile> images, Long userId) {
+
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("리뷰 없음"));
+
+        // ✅ 작성자 검증
+        if (!review.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("수정 권한 없음");
+        }
+
+        // ✅ 리뷰 내용 수정
+        review.update(
+                dto.getShortReview(),
+                dto.getToiletScore(),
+                dto.getOutletScore(),
+                dto.getSeatScore(),
+                dto.getWifiScore(),
+                dto.getNoiseScore()
+        );
+
+        // ✅ 기존 이미지 삭제 (핵심)
+        reviewImageRepository.deleteByReview_Id(reviewId);
+
+        // ✅ 새 이미지 저장 (기존 saveReview 로직 재사용)
+        if (images != null && !images.isEmpty()) {
+
+            int sortOrder = 0;
+
+            File dir = new File(uploadPath);
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+
+            for (MultipartFile image : images) {
+                if (image.isEmpty()) continue;
+
+                String saveName = UUID.randomUUID() + "_" + image.getOriginalFilename();
+                File saveFile = new File(dir, saveName);
+
+                try {
+                    image.transferTo(saveFile);
+                } catch (IOException e) {
+                    throw new RuntimeException("이미지 저장 실패", e);
+                }
+
+                ReviewImage reviewImage = ReviewImage.builder()
+                        .review(review)
+                        .imageUrl(saveName)
+                        .sortOrder(sortOrder++)
+                        .build();
+
+                review.getImages().add(reviewImage);
+            }
+        }
+    }
+
+    // 리뷰 단건 조회 (수정 페이지에서 필요해서 만듦)
+    @Transactional(readOnly = true)
+    public ReviewDetailResponseDto getReviewDetail(Long reviewId) {
+
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(()-> new IllegalArgumentException("리뷰 없음"));
+
+        List<String> imageUrls = review.getImages().stream()
+                .sorted((a, b) -> a.getSortOrder().compareTo((b.getSortOrder())))
+                .map(ReviewImage::getImageUrl)
+                .toList();
+
+        return new ReviewDetailResponseDto(
+                review.getId(),
+                review.getShortReview(),
+                review.getOutletScore(),
+                review.getSeatScore(),
+                review.getToiletScore(),
+                review.getWifiScore(),
+                review.getNoiseScore(),
+
+                imageUrls
+        );
+    }
 }
