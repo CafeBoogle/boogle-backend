@@ -10,8 +10,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: demo  # ✅ 모든 run 명령어 demo/ 기준
-
+        working-directory: demo
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -35,9 +34,9 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT }}
-          source: "demo/build/libs/*.jar"  # ✅ 경로 수정
+          source: "demo/build/libs/*.jar"
           target: "~/app/boogle"
-          strip_components: 3  # ✅ demo/build/libs/ 제거
+          strip_components: 3
 
       - name: Run application on EC2
         uses: appleboy/ssh-action@master
@@ -55,7 +54,7 @@ jobs:
               echo "기존 서버 종료: PID $PID"
             fi
           
-            JAR=$(ls -t *.jar | grep -v plain | head -1)  # ✅ plain.jar 제외
+            JAR=$(ls -t *.jar | grep -v plain | head -1) 
             nohup java -jar $JAR \
               --spring.profiles.active=prod \
               > ~/app/boogle/boogle.log 2>&1 &
