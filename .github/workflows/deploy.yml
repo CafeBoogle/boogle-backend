@@ -48,16 +48,16 @@ jobs:
           port: ${{ secrets.EC2_PORT }}
           script: |
             cd ~/app/boogle
-
+          
             PID=$(lsof -ti:8080)
             if [ -n "$PID" ]; then
               kill -9 $PID
               echo "기존 서버 종료: PID $PID"
             fi
-
-            JAR=$(ls -t *.jar | head -1)
+          
+            JAR=$(ls -t *.jar | grep -v plain | head -1)  # ✅ plain.jar 제외
             nohup java -jar $JAR \
               --spring.profiles.active=prod \
               > ~/app/boogle/boogle.log 2>&1 &
-
+          
             echo "서버 시작: $JAR"
