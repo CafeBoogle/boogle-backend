@@ -2,11 +2,15 @@ name: Deploy to EC2
 
 on:
   push:
-    branches: [ dev ]  # dev 브랜치 푸시 시 실행
+    branches: [ dev ]
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: demo  # ✅ 모든 run 명령어 demo/ 기준
 
     steps:
       - name: Checkout code
@@ -31,9 +35,9 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT }}
-          source: "build/libs/*.jar"
+          source: "demo/build/libs/*.jar"  # ✅ 경로 수정
           target: "~/app/boogle"
-          strip_components: 2
+          strip_components: 3  # ✅ demo/build/libs/ 제거
 
       - name: Run application on EC2
         uses: appleboy/ssh-action@master
@@ -45,14 +49,12 @@ jobs:
           script: |
             cd ~/app/boogle
 
-            # 기존 프로세스 종료
             PID=$(lsof -ti:8080)
             if [ -n "$PID" ]; then
               kill -9 $PID
               echo "기존 서버 종료: PID $PID"
             fi
 
-            # 새 JAR 실행 (백그라운드)
             JAR=$(ls -t *.jar | head -1)
             nohup java -jar $JAR \
               --spring.profiles.active=prod \
