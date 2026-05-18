@@ -184,25 +184,27 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new IllegalArgumentException("리뷰 없음"));
 
-        // ✅ 작성자 검증
+        // 작성자 검증
         if (!review.getUser().getId().equals(userId)) {
             throw new IllegalArgumentException("수정 권한 없음");
         }
 
-        // ✅ 리뷰 내용 수정
+        // 리뷰 내용 수정
         review.update(
                 dto.getShortReview(),
                 dto.getToiletScore(),
                 dto.getOutletScore(),
                 dto.getSeatScore(),
                 dto.getWifiScore(),
-                dto.getNoiseScore()
+                dto.getNoiseScore(),
+                dto.getStudyScore()
         );
+        // 이미지 중 특정 이미지 삭제
+        if (dto.getDeleteImageIds() != null && !dto.getDeleteImageIds().isEmpty()) {
+            reviewImageRepository.deleteAllByIdIn(dto.getDeleteImageIds());
+        }
 
-        // ✅ 기존 이미지 삭제 (핵심)
-        reviewImageRepository.deleteByReview_Id(reviewId);
-
-        // ✅ 새 이미지 저장 (기존 saveReview 로직 재사용)
+        // 새 이미지 저장 (기존 saveReview 로직 재사용)
         if (images != null && !images.isEmpty()) {
 
             int sortOrder = 0;
@@ -242,14 +244,15 @@ public class ReviewService {
         Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(()-> new IllegalArgumentException("리뷰 없음"));
 
-        List<String> imageUrls = review.getImages().stream()
-                .sorted((a, b) -> a.getSortOrder().compareTo((b.getSortOrder())))
-                .map(ReviewImage::getImageUrl)
+        List<ReviewDetailResponseDto.ImageDto> images = review.getImages().stream()
+                .sorted((a, b) -> a.getSortOrder().compareTo(b.getSortOrder()))
+                .map(img -> new ReviewDetailResponseDto.ImageDto(img.getId(), img.getImageUrl()))
                 .toList();
 
         return new ReviewDetailResponseDto(
                 review.getId(),
                 review.getShortReview(),
+                review.getCafe().getName(),
                 review.getOutletScore(),
                 review.getSeatScore(),
                 review.getToiletScore(),
@@ -257,7 +260,7 @@ public class ReviewService {
                 review.getNoiseScore(),
                 review.getStudyScore(),
 
-                imageUrls
+                images
         );
     }
 }

@@ -2,6 +2,8 @@ package com.boogle.dto.request;
 
 import lombok.*;
 
+import java.util.List;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,4 +20,7 @@ public class ReviewRequest {
     private Integer wifiScore;
     private Integer noiseScore;
     private Integer studyScore;
+
+    // 삭제할 이미지 아이디
+    private List<Long> deleteImageIds;
 }
