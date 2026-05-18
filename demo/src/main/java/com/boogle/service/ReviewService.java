@@ -255,6 +255,7 @@ public class ReviewService {
                 review.getToiletScore(),
                 review.getWifiScore(),
                 review.getNoiseScore(),
+                review.getStudyScore(),
 
                 imageUrls
         );

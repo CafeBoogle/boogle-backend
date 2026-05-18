@@ -17,6 +17,7 @@ public class ReviewDetailResponseDto {
     private Integer toiletScore;
     private Integer wifiScore;
     private Integer noiseScore;
+    private Integer studyScore;
 
     private List<String> imageUrls;
 }

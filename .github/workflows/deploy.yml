@@ -33,7 +33,7 @@ jobs:
           port: ${{ secrets.EC2_PORT }}
           source: "build/libs/*.jar"
           target: "~/app/boogle"
-          strip_components: 2  # build/libs/ 경로 제거
+          strip_components: 2
 
       - name: Run application on EC2
         uses: appleboy/ssh-action@master
@@ -43,7 +43,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT }}
           script: |
-            cd ~/app/deploy
+            cd ~/app/boogle
 
             # 기존 프로세스 종료
             PID=$(lsof -ti:8080)
@@ -56,6 +56,6 @@ jobs:
             JAR=$(ls -t *.jar | head -1)
             nohup java -jar $JAR \
               --spring.profiles.active=prod \
-              > ~/app/deploy/app.log 2>&1 &
+              > ~/app/boogle/boogle.log 2>&1 &
 
             echo "서버 시작: $JAR"
