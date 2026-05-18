@@ -2,7 +2,7 @@ name: Deploy to EC2
 
 on:
   push:
-    branches: [ main ]  # main 브랜치 푸시 시 실행
+    branches: [ dev ]  # dev 브랜치 푸시 시 실행
 
 jobs:
   deploy:

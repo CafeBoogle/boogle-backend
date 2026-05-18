@@ -1,6 +1,5 @@
 package com.boogle.entity;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -71,8 +70,8 @@ public class Review {
             Integer outletScore,
             Integer seatScore,
             Integer wifiScore,
-            Integer noiseScore
-    ) {
+            Integer noiseScore,
+            Integer studyScore) {
 
         this.shortReview = shortReview;
         this.toiletScore = toiletScore;
@@ -80,5 +79,6 @@ public class Review {
         this.seatScore = seatScore;
         this.wifiScore = wifiScore;
         this.noiseScore = noiseScore;
+        this.studyScore = studyScore;
     }
 }

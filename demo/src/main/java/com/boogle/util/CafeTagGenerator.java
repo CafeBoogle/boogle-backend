@@ -12,31 +12,18 @@ public class CafeTagGenerator {
     private static final double TAG_THRESHOLD = 3.5;
 
     public List<String> generateTags(CafeScoreResopnseDto dto) {
-        // 리뷰가 없으면 태그도 없어야함
-        if(dto == null || dto.getReviewCount() == 0) {
+        if (dto == null || dto.getReviewCount() == 0) {
             return List.of();
         }
 
         List<String> tags = new ArrayList<>();
 
-        if(isOver(dto.getToiletScoreAvg())){
-            tags.add("깨끗한 화장실");
-        }
-        if(isOver(dto.getNoiseScoreAvg())){
-            tags.add("조용한 분위기");
-        }
-        if(isOver(dto.getSeatScoreAvg())){
-            tags.add("충분한 좌석");
-        }
-        if(isOver(dto.getOutletScoreAvg())){
-            tags.add("충분한 콘센트");
-        }
-        if(isOver(dto.getWifiScoreAvg())){
-            tags.add("빠른 와이파이");
-        }
-        if(isOver(dto.getStudyScoreAvg())){
-            tags.add("카공 추천");
-        }
+        if (isOver(dto.getStudyScoreAvg()))   tags.add("카공 추천");
+        if (isOver(dto.getOutletScoreAvg()))  tags.add("충분한 콘센트");
+        if (isOver(dto.getWifiScoreAvg()))    tags.add("빠른 와이파이");
+        if (isOver(dto.getSeatScoreAvg()))    tags.add("충분한 좌석");
+        if (isOver(dto.getNoiseScoreAvg()))   tags.add("조용한 분위기");
+        if (isOver(dto.getToiletScoreAvg()))  tags.add("깨끗한 화장실");
 
         return tags;
     }
