@@ -55,7 +55,7 @@ public class KakaoService {
             // Refresh Token은 쿠키 유지
             cookieUtil.addRefreshTokenCookie(response, refreshToken);
             // Access Token은 URL 파라미터로 전달
-            response.sendRedirect(frontendUrl + "/?access_token=" + accessToken);
+            response.sendRedirect(redirectUrl + "/?access_token=" + accessToken);
         }
     }
 
