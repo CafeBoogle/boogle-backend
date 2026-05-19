@@ -56,9 +56,6 @@ public class UserService {
     public User signUp(SignUpRequest request) {
         User user = userRepository.findByProviderAndProviderUserId(request.getProvider(), request.getProviderUserId())
                 .orElseGet(() -> {
-                    if (userRepository.existsByNickname(request.getNickname())) {
-                        throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
-                    }
                     return User.builder()
                             .provider(request.getProvider())
                             .providerUserId(request.getProviderUserId())
