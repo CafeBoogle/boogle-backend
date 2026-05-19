@@ -47,7 +47,8 @@ public class KakaoService {
 
         if (user.getNickname() == null || user.getNickname().startsWith("Temp_")) {
             String tempToken = jwtProvider.createAccessToken(user.getId(), null, user.getRole());
-            response.sendRedirect(redirectUrl + "/signup?access_token=" + tempToken);
+            // provider, userId 추가
+            response.sendRedirect(redirectUrl + "/signup?provider=KAKAO&userId=" + user.getProviderUserId() + "&access_token=" + tempToken);
         } else {
             String accessToken = jwtProvider.createAccessToken(user.getId(), user.getNickname(), user.getRole());
             String refreshToken = jwtProvider.createRefreshToken(user.getId(), user.getNickname(), user.getRole());
