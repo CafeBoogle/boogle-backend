@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -25,7 +26,7 @@ public class AuthController {
     private final JwtProvider jwtProvider;
     private final CookieUtil cookieUtil;
     private UserRepository userRepository;
-    
+
     @Operation(summary = "accessToken 만료 시 refreshToken 으로 재발급")
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(HttpServletRequest request, HttpServletResponse response) {
@@ -49,19 +50,16 @@ public class AuthController {
                 return ResponseEntity.status(401).body("Refresh token 만료");
             }
 
-            // ✅ 여기 핵심
             Long userId = jwtProvider.getUserId(refreshToken);
             String nickname = jwtProvider.getNickname(refreshToken);
 
             Optional<User> user = userRepository.findById(userId);
             Role role = user.get().getRole();
 
-            String newAccessToken =
-                    jwtProvider.createAccessToken(userId, nickname, role);
+            String newAccessToken = jwtProvider.createAccessToken(userId, nickname, role);
 
-            cookieUtil.addAccessTokenCookie(response, newAccessToken);
-
-            return ResponseEntity.ok("재발급 완료");
+            // ✅ 쿠키 대신 바디로 반환
+            return ResponseEntity.ok(Map.of("accessToken", newAccessToken));
 
         } catch (Exception e) {
             return ResponseEntity.status(401).body("토큰 오류");

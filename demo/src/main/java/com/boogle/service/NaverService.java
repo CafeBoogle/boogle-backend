@@ -90,10 +90,8 @@ public class NaverService {
 
         // EXISTING USER
         if (userOptional.isPresent()) {
-
             User user = userOptional.get();
 
-            // signup 필요
             if (user.getNickname() == null) {
                 response.sendRedirect(
                         redirectUrl + "/signup?provider=NAVER&userId=" + providerUserId
@@ -103,10 +101,13 @@ public class NaverService {
 
             String accessToken =
                     jwtProvider.createAccessToken(user.getId(), user.getNickname(), user.getRole());
+            String refreshToken =
+                    jwtProvider.createRefreshToken(user.getId(), user.getNickname(), user.getRole());
 
-            cookieUtil.addAccessTokenCookie(response, accessToken);
-
-            response.sendRedirect(redirectUrl + "/");
+            // Refresh Token은 쿠키 유지
+            cookieUtil.addRefreshTokenCookie(response, refreshToken);
+            // Access Token은 URL 파라미터로 전달
+            response.sendRedirect(redirectUrl + "/?access_token=" + accessToken);
             return;
         }
         User newUser = User.builder()

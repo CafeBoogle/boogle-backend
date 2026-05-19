@@ -9,6 +9,7 @@ public class CookieUtil {
     public static final String ACCESS_TOKEN_COOKIE = "access_token";
     public static final String REFRESH_TOKEN_COOKIE = "refresh_token";
 
+    @Deprecated
     public void addAccessTokenCookie(HttpServletResponse response, String accessToken) {
         Cookie cookie = new Cookie(ACCESS_TOKEN_COOKIE, accessToken);
         cookie.setHttpOnly(true);
@@ -33,6 +34,7 @@ public class CookieUtil {
         response.addCookie(cookie);
     }
 
+    @Deprecated
     public void deleteAccessTokenCookie(HttpServletResponse response) {
         Cookie cookie = new Cookie(ACCESS_TOKEN_COOKIE, null);
         cookie.setPath("/");

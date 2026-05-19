@@ -38,7 +38,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = null;
 
-        if (request.getCookies() != null) {
+        // 1. Authorization 헤더에서 먼저 추출
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+        }
+
+        // 2. 헤더 없으면 쿠키 fallback (기존 방식)
+        if (token == null && request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
                 if ("access_token".equals(cookie.getName())) {
                     token = cookie.getValue();
@@ -56,8 +63,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             Collections.emptyList()
                     );
 
-            SecurityContextHolder.getContext()
-                    .setAuthentication(authentication);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
         filterChain.doFilter(request, response);
