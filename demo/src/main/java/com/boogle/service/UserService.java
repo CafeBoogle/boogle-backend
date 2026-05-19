@@ -54,16 +54,22 @@ public class UserService {
 
     @Transactional
     public User signUp(SignUpRequest request) {
-        User user = userRepository.findByProviderAndProviderUserId(request.getProvider(), request.getProviderUserId())
-                .orElseGet(() -> {
-                    return User.builder()
-                            .provider(request.getProvider())
-                            .providerUserId(request.getProviderUserId())
-                            .nickname(request.getNickname())
-                            .profileImageName(request.getCatId())
-                            .role(Role.USER)
-                            .build();
-                });
+
+        User user = userRepository.findByProviderAndProviderUserId(
+                request.getProvider(), request.getProviderUserId()
+        ).orElseGet(() ->
+                User.builder()
+                        .provider(request.getProvider())
+                        .providerUserId(request.getProviderUserId())
+                        // null이면 default.png 폴백
+                        .profileImageName(request.getCatId() != null ? request.getCatId() : "default.png")
+                        .role(Role.USER)
+                        .build()
+        );
+
+        user.setNickname(request.getNickname());
+        user.setProfileImageName(request.getCatId() != null ? request.getCatId() : "default.png");
+        user.setRole(Role.USER);
 
         return userRepository.save(user);
     }
