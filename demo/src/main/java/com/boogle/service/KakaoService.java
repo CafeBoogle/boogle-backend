@@ -4,7 +4,6 @@ import com.boogle.entity.User;
 import com.boogle.entity.type.Provider;
 import com.boogle.entity.type.Role;
 import jakarta.servlet.http.HttpServletResponse;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -18,6 +17,7 @@ import com.boogle.util.JwtProvider;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +32,6 @@ public class KakaoService {
     private String clientSecret;
 
     private final UserRepository userRepository;
-    private final UserService userService;
     private final JwtProvider jwtProvider;
     private final CookieUtil cookieUtil;
 
@@ -41,20 +40,36 @@ public class KakaoService {
         Map<String, Object> body = getKakaoUserInfo(kakaoAccessToken);
         String providerUserId = String.valueOf(body.get("id"));
 
-        Map<String, Object> properties = (Map<String, Object>) body.get("properties");
-        String kakaoNickname = (properties != null) ? (String) properties.get("nickname") : "TempUser";
+        // DB CHECK
+        Optional<User> userOptional = userRepository.findByProviderAndProviderUserId(Provider.KAKAO, providerUserId);
 
-        User user = userService.processKakaoUser(providerUserId, kakaoNickname);
+        // EXISTING USER
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
 
-        if (user.getNickname() == null) {
-            String tempToken = jwtProvider.createAccessToken(user.getId(), null, user.getRole());
-            response.sendRedirect(redirectUrl + "/signup?provider=KAKAO&userId=" + user.getProviderUserId() + "&access_token=" + tempToken);
-        } else {
+            if (user.getNickname() == null) {
+                response.sendRedirect(redirectUrl + "/signup?provider=KAKAO&userId=" + providerUserId);
+                return;
+            }
+
             String accessToken = jwtProvider.createAccessToken(user.getId(), user.getNickname(), user.getRole());
             String refreshToken = jwtProvider.createRefreshToken(user.getId(), user.getNickname(), user.getRole());
             cookieUtil.addRefreshTokenCookie(response, refreshToken);
             response.sendRedirect(redirectUrl + "/category?access_token=" + accessToken);
+            return;
         }
+
+        // NEW USER
+        User newUser = User.builder()
+                .provider(Provider.KAKAO)
+                .providerUserId(providerUserId)
+                .nickname(null)
+                .profileImageName("default.png")
+                .role(Role.USER)
+                .build();
+
+        userRepository.save(newUser);
+        response.sendRedirect(redirectUrl + "/signup?provider=KAKAO&userId=" + providerUserId);
     }
 
     private String getKakaoAccessToken(String code) {
@@ -82,33 +97,5 @@ public class KakaoService {
         HttpEntity<?> request = new HttpEntity<>(headers);
         ResponseEntity<Map> response = restTemplate.exchange("https://kapi.kakao.com/v2/user/me", HttpMethod.GET, request, Map.class);
         return response.getBody();
-    }
-
-    private void issueTempToken(User user, HttpServletResponse response) {
-        String accessToken = jwtProvider.createAccessToken(user.getId(), null, user.getRole());
-        cookieUtil.addAccessTokenCookie(response, accessToken);
-    }
-
-    private void issueFullToken(User user, HttpServletResponse response) {
-        String accessToken = jwtProvider.createAccessToken(user.getId(), user.getNickname(), user.getRole());
-        String refreshToken = jwtProvider.createRefreshToken(user.getId(), user.getNickname(), user.getRole());
-        cookieUtil.addAccessTokenCookie(response, accessToken);
-        cookieUtil.addRefreshTokenCookie(response, refreshToken);
-    }
-
-    @Transactional
-    public User processKakaoUser(String providerUserId, String kakaoNickname) {
-        return userRepository.findByProviderAndProviderUserId(Provider.KAKAO, providerUserId)
-                .orElseGet(() -> {
-                    // ✅ 네이버처럼 닉네임 null로 저장
-                    User newUser = User.builder()
-                            .provider(Provider.KAKAO)
-                            .providerUserId(providerUserId)
-                            .nickname(null)
-                            .profileImageName("default.png")
-                            .role(Role.USER)
-                            .build();
-                    return userRepository.save(newUser);
-                });
     }
 }
