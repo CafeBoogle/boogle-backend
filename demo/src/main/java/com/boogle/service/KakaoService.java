@@ -46,16 +46,13 @@ public class KakaoService {
         User user = userService.processKakaoUser(providerUserId, kakaoNickname);
 
         if (user.getNickname() == null || user.getNickname().startsWith("Temp_")) {
-            // 신규 유저 - 임시 토큰 + 회원가입 페이지
             String tempToken = jwtProvider.createAccessToken(user.getId(), null, user.getRole());
-            cookieUtil.addRefreshTokenCookie(response, jwtProvider.createRefreshToken(user.getId(), null, user.getRole()));
-            response.sendRedirect(frontendUrl + "/auth/success?isNewUser=true&access_token=" + tempToken);
+            response.sendRedirect(redirectUrl + "/signup?access_token=" + tempToken);
         } else {
-            // 기존 유저 - 풀 토큰 + 카테고리 페이지
             String accessToken = jwtProvider.createAccessToken(user.getId(), user.getNickname(), user.getRole());
             String refreshToken = jwtProvider.createRefreshToken(user.getId(), user.getNickname(), user.getRole());
             cookieUtil.addRefreshTokenCookie(response, refreshToken);
-            response.sendRedirect(frontendUrl + "/auth/success?isNewUser=false&access_token=" + accessToken);
+            response.sendRedirect(redirectUrl + "/category?access_token=" + accessToken);
         }
     }
 

@@ -5,7 +5,7 @@ server:
   forward-headers-strategy: framework
 
 app:
-  frontend-url: https://api.moonsunpower.com
+  frontend-url: https://localhost:5173
 
 spring:
   datasource:

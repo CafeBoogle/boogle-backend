@@ -89,22 +89,20 @@ public class NaverService {
                 userRepository.findByProviderAndProviderUserId(Provider.NAVER, providerUserId);
 
         // EXISTING USER
-        // EXISTING USER
         if (userOptional.isPresent()) {
             User user = userOptional.get();
 
             if (user.getNickname() == null) {
-                // 닉네임 없는 기존 유저 - 회원가입 페이지
-                String tempToken = jwtProvider.createAccessToken(user.getId(), null, user.getRole());
-                response.sendRedirect(frontendUrl + "/auth/success?isNewUser=true&access_token=" + tempToken);
+                response.sendRedirect(
+                        redirectUrl + "/signup?provider=NAVER&userId=" + providerUserId
+                );
                 return;
             }
 
-            // 정상 유저
             String accessToken = jwtProvider.createAccessToken(user.getId(), user.getNickname(), user.getRole());
             String refreshToken = jwtProvider.createRefreshToken(user.getId(), user.getNickname(), user.getRole());
             cookieUtil.addRefreshTokenCookie(response, refreshToken);
-            response.sendRedirect(frontendUrl + "/auth/success?isNewUser=false&access_token=" + accessToken);
+            response.sendRedirect(redirectUrl + "/?access_token=" + accessToken);
             return;
         }
 
@@ -118,8 +116,6 @@ public class NaverService {
                 .build();
 
         userRepository.save(newUser);
-        // 신규 유저 - 회원가입 페이지
-        String tempToken = jwtProvider.createAccessToken(newUser.getId(), null, newUser.getRole());
-        response.sendRedirect(frontendUrl + "/auth/success?isNewUser=true&access_token=" + tempToken);
+        response.sendRedirect(redirectUrl + "/signup?provider=NAVER&userId=" + providerUserId);
     }
 }
