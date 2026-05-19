@@ -73,15 +73,19 @@ public class UserController {
     }
 
     @PostMapping(value = "/signup")
-    public ResponseEntity<?> signUp(@ModelAttribute SignUpRequest request, HttpServletResponse response) {
+    public ResponseEntity<?> signUp(@RequestBody SignUpRequest request, HttpServletResponse response) {
         User user = userService.signUp(request);
 
         String accessToken = jwtProvider.createAccessToken(user.getId(), user.getNickname(), user.getRole());
         String refreshToken = jwtProvider.createRefreshToken(user.getId(), user.getNickname(), user.getRole());
 
-        cookieUtil.addAccessTokenCookie(response, accessToken);
         cookieUtil.addRefreshTokenCookie(response, refreshToken);
 
-        return ResponseEntity.ok().body("회원가입 및 로그인 완료");
+        return ResponseEntity.ok().body(
+                java.util.Map.of(
+                        "message", "회원가입 및 로그인 완료",
+                        "accessToken", accessToken
+                )
+        );
     }
 }
