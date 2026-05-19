@@ -4,6 +4,7 @@ import com.boogle.entity.User;
 import com.boogle.entity.type.Provider;
 import com.boogle.entity.type.Role;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
@@ -45,9 +46,8 @@ public class KakaoService {
 
         User user = userService.processKakaoUser(providerUserId, kakaoNickname);
 
-        if (user.getNickname() == null || user.getNickname().startsWith("Temp_")) {
+        if (user.getNickname() == null) {
             String tempToken = jwtProvider.createAccessToken(user.getId(), null, user.getRole());
-            // provider, userId 추가
             response.sendRedirect(redirectUrl + "/signup?provider=KAKAO&userId=" + user.getProviderUserId() + "&access_token=" + tempToken);
         } else {
             String accessToken = jwtProvider.createAccessToken(user.getId(), user.getNickname(), user.getRole());
@@ -94,5 +94,21 @@ public class KakaoService {
         String refreshToken = jwtProvider.createRefreshToken(user.getId(), user.getNickname(), user.getRole());
         cookieUtil.addAccessTokenCookie(response, accessToken);
         cookieUtil.addRefreshTokenCookie(response, refreshToken);
+    }
+
+    @Transactional
+    public User processKakaoUser(String providerUserId, String kakaoNickname) {
+        return userRepository.findByProviderAndProviderUserId(Provider.KAKAO, providerUserId)
+                .orElseGet(() -> {
+                    // ✅ 네이버처럼 닉네임 null로 저장
+                    User newUser = User.builder()
+                            .provider(Provider.KAKAO)
+                            .providerUserId(providerUserId)
+                            .nickname(null)
+                            .profileImageName("default.png")
+                            .role(Role.USER)
+                            .build();
+                    return userRepository.save(newUser);
+                });
     }
 }
