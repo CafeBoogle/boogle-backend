@@ -38,13 +38,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = null;
 
-        // 1. Authorization 헤더에서 먼저 추출
         String authHeader = request.getHeader("Authorization");
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
         }
 
-        // 2. 헤더 없으면 쿠키 fallback (기존 방식)
         if (token == null && request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
                 if ("access_token".equals(cookie.getName())) {
@@ -53,7 +51,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
         }
 
-        if (token != null && jwtProvider.validateToken(token)) {
+        // 토큰이 유요하지 않으면 만료 반환
+        if (token != null && !jwtProvider.validateToken(token)) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("TOKEN_EXPIRED");
+            return;
+        }
+
+        if (token != null) {
             Long userId = jwtProvider.getUserId(token);
 
             UsernamePasswordAuthenticationToken authentication =
