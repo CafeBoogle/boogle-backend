@@ -106,7 +106,6 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     );
 
     // 한줄리뷰
-
     @Query("""
     select r.shortReview
     from Review r
@@ -118,5 +117,8 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             @Param("cafeId") Long cafeId,
             Pageable pageable
     );
+
+    // 특정 유저가 특정 카페에 리뷰를 달았는지 확인
+    Optional<Review> findByUserIdAndCafeId(Long userId, Long cafeId);
 
 }
