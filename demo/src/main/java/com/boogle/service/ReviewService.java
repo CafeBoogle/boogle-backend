@@ -49,6 +49,10 @@ public class ReviewService {
         Cafe cafe = cafeRepository.findById(dto.getCafeId())
                 .orElseThrow(() -> new IllegalArgumentException("카페를 찾을 수 없습니다."));
 
+        if (reviewRepository.findByUserIdAndCafeId(userId, dto.getCafeId()).isPresent()) {
+            throw new IllegalStateException("이미 리뷰를 작성했습니다.");
+        }
+
         // 카페 id기준 리뷰 저장
         Review review = Review.builder()
                 .user(user)
@@ -85,7 +89,7 @@ public class ReviewService {
                 System.out.println("saving image to: " + saveFile.getAbsolutePath());
 
                 try {
-                    image.transferTo(saveFile); // ✅ 이거 하나만
+                    image.transferTo(saveFile);
                 } catch (IOException e) {
                     e.printStackTrace();
                     throw new RuntimeException("이미지 저장 실패", e);
@@ -100,9 +104,6 @@ public class ReviewService {
                 review.getImages().add(reviewImage);
             }
         }
-
-        System.out.println("images is null? " + (images == null));
-        System.out.println("images size = " + (images == null ? "null" : images.size()));
 
         try {
             return reviewRepository.save(review).getId();
