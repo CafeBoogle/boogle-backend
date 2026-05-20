@@ -25,7 +25,7 @@ public class AuthController {
 
     private final JwtProvider jwtProvider;
     private final CookieUtil cookieUtil;
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Operation(summary = "accessToken 만료 시 refreshToken 으로 재발급")
     @PostMapping("/refresh")
