@@ -3,7 +3,9 @@ package com.boogle.controller;
 import com.boogle.dto.ReviewDetailResponseDto;
 import com.boogle.dto.ReviewUpdateRequestDto;
 import com.boogle.dto.request.ReviewRequest;
+import com.boogle.repository.ReviewRepository;
 import com.boogle.service.ReviewService;
+import com.nimbusds.oauth2.sdk.ResponseMode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -21,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "03. Review", description = "카페 리뷰 등록 및 관리 API")
 @RestController
@@ -29,6 +32,7 @@ import java.util.List;
 public class ReviewController {
 
     private final ReviewService reviewService;
+    private final ReviewRepository reviewRepository;
 
     @Operation(
             summary = "리뷰 등록 (이미지 포함)",
@@ -102,5 +106,10 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.getReviewDetail(reviewId));
     }
 
-
+    @Operation(summary = "내가 남긴 리뷰 상세조회", description = "리뷰 ID, 유저ID를 이용해서 리뷰를 조회")
+    @GetMapping("/check")
+    public ResponseEntity<?> checkDuplicate(@RequestPart Long cafeId, @AuthenticationPrincipal Long userId) {
+        boolean exists = reviewRepository.findByUserIdAndCafeId(userId, cafeId).isPresent();
+        return ResponseEntity.ok(Map.of("exists", exists));
+    }
 }
