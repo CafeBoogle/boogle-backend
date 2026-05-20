@@ -55,7 +55,7 @@ public class KakaoService {
             String accessToken = jwtProvider.createAccessToken(user.getId(), user.getNickname(), user.getRole());
             String refreshToken = jwtProvider.createRefreshToken(user.getId(), user.getNickname(), user.getRole());
             cookieUtil.addRefreshTokenCookie(response, refreshToken);
-            response.sendRedirect(redirectUrl + "/category?access_token=" + accessToken);
+            response.sendRedirect(redirectUrl + "/?access_token=" + accessToken);
             return;
         }
 
