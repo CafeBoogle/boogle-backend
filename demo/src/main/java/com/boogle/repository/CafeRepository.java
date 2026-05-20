@@ -38,5 +38,4 @@ public interface CafeRepository extends JpaRepository<Cafe, Long> {
         c.imageName
     """)
     List<CafeListProjection> findCafeListWithinBounds(Double minLat, Double maxLat, Double minLng, Double maxLng);
-
 }

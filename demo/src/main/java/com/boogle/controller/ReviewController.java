@@ -3,6 +3,8 @@ package com.boogle.controller;
 import com.boogle.dto.ReviewDetailResponseDto;
 import com.boogle.dto.ReviewUpdateRequestDto;
 import com.boogle.dto.request.ReviewRequest;
+import com.boogle.entity.Cafe;
+import com.boogle.repository.CafeRepository;
 import com.boogle.repository.ReviewRepository;
 import com.boogle.service.ReviewService;
 import com.nimbusds.oauth2.sdk.ResponseMode;
@@ -33,6 +35,7 @@ public class ReviewController {
 
     private final ReviewService reviewService;
     private final ReviewRepository reviewRepository;
+    private final CafeRepository cafeRepository;
 
     @Operation(
             summary = "리뷰 등록 (이미지 포함)",
@@ -108,8 +111,12 @@ public class ReviewController {
 
     @Operation(summary = "내가 남긴 리뷰 상세조회", description = "리뷰 ID, 유저ID를 이용해서 리뷰를 조회")
     @GetMapping("/check")
-    public ResponseEntity<?> checkDuplicate(@RequestParam Long cafeId, @AuthenticationPrincipal Long userId) {
-        boolean exists = reviewRepository.findByUserIdAndCafeId(userId, cafeId).isPresent();
+    public ResponseEntity<?> checkDuplicate(@RequestParam String kakaoPlaceId, @AuthenticationPrincipal Long userId) {
+        Cafe cafe = cafeRepository.findByKakaoPlaceId(kakaoPlaceId).orElse(null);
+        if(cafe == null) {
+            return ResponseEntity.ok(Map.of("exists", false));
+        }
+        boolean exists = reviewRepository.findByUserIdAndCafeId(userId, cafe.getId()).isPresent();
         return ResponseEntity.ok(Map.of("exists", exists));
     }
 }
