@@ -108,7 +108,7 @@ public class ReviewController {
 
     @Operation(summary = "내가 남긴 리뷰 상세조회", description = "리뷰 ID, 유저ID를 이용해서 리뷰를 조회")
     @GetMapping("/check")
-    public ResponseEntity<?> checkDuplicate(@RequestPart Long cafeId, @AuthenticationPrincipal Long userId) {
+    public ResponseEntity<?> checkDuplicate(@RequestParam Long cafeId, @AuthenticationPrincipal Long userId) {
         boolean exists = reviewRepository.findByUserIdAndCafeId(userId, cafeId).isPresent();
         return ResponseEntity.ok(Map.of("exists", exists));
     }
