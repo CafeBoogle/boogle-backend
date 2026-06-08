@@ -70,7 +70,8 @@ public class SecurityConfig {
                 "https://localhost:5173",
                 "https://boogle-frontend3.vercel.app",
                 "https://boogle.my",
-                "https://192.168.10.98:5173"
+                "https://192.168.10.98:5173",
+                "https://boogle-frontend-test.vercel.app"
         ));
 
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
