@@ -4,6 +4,7 @@ import com.boogle.dto.CafeScoreResopnseDto;
 import com.boogle.dto.ReviewDetailResponseDto;
 import com.boogle.dto.ReviewUpdateRequestDto;
 import com.boogle.dto.projection.CafeScoreProjection;
+import com.boogle.dto.projection.ShortReviewProjection;
 import com.boogle.dto.request.ReviewRequest;
 import com.boogle.entity.Cafe;
 import com.boogle.entity.Review;
@@ -42,6 +43,11 @@ public class ReviewService {
     @Value("${file.upload-dir.review}")
     private String uploadPath;
 
+    // '잘 모르겠어요' 향목의 헬퍼 메서드
+    private Integer nullIfUnknown(Integer score) {
+        return (score == null || score == -1) ? null : score;
+    }
+
     @Transactional
     public Long saveReview(ReviewRequest dto, List<MultipartFile> images, Long userId) {
         User user = userRepository.findById(userId)
@@ -58,12 +64,12 @@ public class ReviewService {
                 .user(user)
                 .cafe(cafe)
                 .shortReview(dto.getShortReview())
-                .toiletScore(dto.getToiletScore())
-                .outletScore(dto.getOutletScore())
-                .seatScore(dto.getSeatScore())
-                .wifiScore(dto.getWifiScore())
-                .noiseScore(dto.getNoiseScore())
-                .studyScore(dto.getStudyScore())
+                .toiletScore(nullIfUnknown(dto.getToiletScore()))
+                .outletScore(nullIfUnknown(dto.getOutletScore()))
+                .seatScore(nullIfUnknown(dto.getSeatScore()))
+                .wifiScore(nullIfUnknown(dto.getWifiScore()))
+                .noiseScore(nullIfUnknown(dto.getNoiseScore()))
+                .studyScore(nullIfUnknown(dto.getStudyScore()))
                 .build();
 
         // 이미지 파일 처리
@@ -168,15 +174,13 @@ public class ReviewService {
     }
 
     // 한줄리뷰 가져오기
-
     @Transactional(readOnly = true)
-    public List<String> getCafeShortReviews(Long cafeId) {
+    public List<ShortReviewProjection> getCafeShortReviews(Long cafeId) {
         return reviewRepository.findShortReviewsByCafeId(
                 cafeId,
                 PageRequest.of(0, 10)
         );
     }
-
 
     // 리뷰 수정
     @Transactional
@@ -193,12 +197,12 @@ public class ReviewService {
         // 리뷰 내용 수정
         review.update(
                 dto.getShortReview(),
-                dto.getToiletScore(),
-                dto.getOutletScore(),
-                dto.getSeatScore(),
-                dto.getWifiScore(),
-                dto.getNoiseScore(),
-                dto.getStudyScore()
+                nullIfUnknown(dto.getToiletScore()),
+                nullIfUnknown(dto.getOutletScore()),
+                nullIfUnknown(dto.getSeatScore()),
+                nullIfUnknown(dto.getWifiScore()),
+                nullIfUnknown(dto.getNoiseScore()),
+                nullIfUnknown(dto.getStudyScore())
         );
         // 이미지 중 특정 이미지 삭제
         if (dto.getDeleteImageIds() != null && !dto.getDeleteImageIds().isEmpty()) {

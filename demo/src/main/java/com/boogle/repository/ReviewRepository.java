@@ -2,6 +2,7 @@ package com.boogle.repository;
 
 import com.boogle.dto.projection.CafeScoreProjection;
 import com.boogle.dto.MyReviewResponseDto;
+import com.boogle.dto.projection.ShortReviewProjection;
 import com.boogle.entity.Review;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -107,13 +108,14 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     // 한줄리뷰
     @Query("""
-    select r.shortReview
+    select r.shortReview as shortReview, u.nickname as nickname
     from Review r
+    join r.user u
     where r.cafe.id = :cafeId
       and r.shortReview is not null
     order by r.createdAt desc
-""")
-    List<String> findShortReviewsByCafeId(
+    """)
+    List<ShortReviewProjection> findShortReviewsByCafeId(
             @Param("cafeId") Long cafeId,
             Pageable pageable
     );
