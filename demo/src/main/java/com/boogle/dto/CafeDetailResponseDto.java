@@ -1,5 +1,6 @@
 package com.boogle.dto;
 
+import com.boogle.dto.projection.ShortReviewProjection;
 import com.boogle.dto.request.ReviewRequest;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
@@ -19,7 +20,7 @@ public class CafeDetailResponseDto {
     private Double longitude;
     private String contact;
     private String placeId;
-    private List<String> shortReviews;
+    private List<ShortReviewProjection> shortReviews;
     
     // 리뷰 점수
     private CafeScoreResopnseDto score;

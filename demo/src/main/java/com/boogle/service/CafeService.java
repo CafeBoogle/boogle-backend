@@ -6,6 +6,7 @@ import com.boogle.dto.CafeSaveRequestDto;
 import com.boogle.dto.CafeScoreResopnseDto;
 import com.boogle.dto.projection.CafeListProjection;
 import com.boogle.dto.projection.CafeScoreProjection;
+import com.boogle.dto.projection.ShortReviewProjection;
 import com.boogle.entity.Cafe;
 import com.boogle.repository.CafeRepository;
 import com.boogle.util.CafeTagGenerator;
@@ -101,7 +102,7 @@ public class CafeService {
         List<String> previewImages =
                 reviewService.getPreviewReviewImages(cafeId);
 
-        List<String> shortReviews = reviewService.getCafeShortReviews(cafeId);
+        List<ShortReviewProjection> shortReviews = reviewService.getCafeShortReviews(cafeId);
 
 
 
