@@ -9,7 +9,7 @@ app:
 
 spring:
   datasource:
-    url: jdbc:h2:file:/home/app/data/testdb;AUTO_SERVER=TRUE
+    url: jdbc:h2:file:/home/ubuntu/app/data/testdb;AUTO_SERVER=TRUE
     driver-class-name: org.h2.Driver
     username: sa
 
