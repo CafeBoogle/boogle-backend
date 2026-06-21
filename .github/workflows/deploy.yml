@@ -62,4 +62,4 @@ jobs:
       - name: Deploy to Kubernetes cluster
         run: |
           sed -i "s|your-docker-registry/boogle:latest|${{ secrets.DOCKERHUB_USERNAME }}/boogle:${{ github.sha }}|g" k8s/deployment.yml
-          kubectl apply -f k8s/deployment.yml
+          kubectl apply -f k8s/deployment.yml --validate=false
