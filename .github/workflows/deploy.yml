@@ -1,4 +1,4 @@
-name: Deploy to EC2
+name: Deploy to Kubernetes
 
 on:
   push:
@@ -10,7 +10,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: demo
+        working-directory: demo # 내 프로젝트 폴더 이름
 
     steps:
       - name: Checkout code
@@ -22,7 +22,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Create secret-prod.properties  # ✅ 빌드 전으로 이동
+      - name: Create secret-prod.properties
         run: |
           echo "${{ secrets.SECRET_PROD_PROPERTIES }}" \
             > src/main/resources/secret-prod.properties
@@ -33,36 +33,33 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew clean build -x test
 
-      - name: Upload JAR to EC2
-        uses: appleboy/scp-action@master
+      # 1. Docker Hub 로그인
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: ${{ secrets.EC2_PORT }}
-          source: "demo/build/libs/*.jar"
-          target: "~/app/boogle"
-          strip_components: 3
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Run application on EC2
-        uses: appleboy/ssh-action@master
+      # 2. Docker 이미지 빌드 및 푸시
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v4
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: ${{ secrets.EC2_PORT }}
-          script: |
-            cd ~/app/boogle
+          context: ./demo
+          file: ./demo/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/boogle:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/boogle:${{ github.sha }}
 
-            PID=$(lsof -ti:8080)
-            if [ -n "$PID" ]; then
-              kill -9 $PID
-              echo "기존 서버 종료: PID $PID"
-            fi
+      # 3. 쿠버네티스 클러스터 연결 설정
+      - name: Set up Kubeconfig
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
 
-            JAR=$(ls -t *.jar | grep -v plain | head -1)
-            nohup java -jar $JAR \
-              --spring.profiles.active=prod \
-              > ~/app/boogle/boogle.log 2>&1 &
-
-            echo "서버 시작: $JAR"
+      # 4. deployment.yml 내의 이미지 태그를 현재 빌드된 태그로 치환 후 배포
+      - name: Deploy to Kubernetes cluster
+        run: |
+          sed -i "s|your-docker-registry/boogle:latest|${{ secrets.DOCKERHUB_USERNAME }}/boogle:${{ github.sha }}|g" k8s/deployment.yml
+          kubectl apply -f k8s/deployment.yml
