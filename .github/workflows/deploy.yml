@@ -2,8 +2,10 @@ name: Deploy to EC2 with Docker Hub
 
 on:
   push:
-    branches: [ "dev" ] # 👈 본인의 배포 브랜치 이름(main 또는 master) 확인!
-
+    branches: [ "dev" ]
+defaults:
+  run:
+    working-directory: ./boogle-backend
 jobs:
   deploy:
     runs-on: ubuntu-latest
