@@ -60,6 +60,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           port: ${{ secrets.EC2_PORT }}
           script: |
+            export KUBECONFIG=$HOME/.kube/config
             cd ~/app/boogle/k8s
             
             # 서버 내부에 deployment.yml 파일 내용을 직접 덮어씁니다.
