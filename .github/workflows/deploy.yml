@@ -10,7 +10,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: demo # 내 프로젝트 폴더 이름
+        working-directory: demo
 
     steps:
       - name: Checkout code
@@ -51,15 +51,57 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/boogle:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/boogle:${{ github.sha }}
 
-      # 3. 쿠버네티스 클러스터 연결 설정
-      - name: Set up Kubeconfig
-        uses: azure/k8s-set-context@v3
+      # 3. ⭐️ SSH로 EC2에 접속하여 내부에서 쿠버네티스 배포 실행 (방화벽 우회)
+      - name: Executing remote ssh commands to deploy
+        uses: appleboy/ssh-action@master
         with:
-          method: kubeconfig
-          kubeconfig: ${{ secrets.KUBE_CONFIG }}
-
-      # 4. deployment.yml 내의 이미지 태그를 현재 빌드된 태그로 치환 후 배포
-      - name: Deploy to Kubernetes cluster
-        run: |
-          sed -i "s|your-docker-registry/boogle:latest|${{ secrets.DOCKERHUB_USERNAME }}/boogle:${{ github.sha }}|g" k8s/deployment.yml
-          kubectl apply -f k8s/deployment.yml --validate=false
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: ${{ secrets.EC2_PORT }}
+          script: |
+            cd ~/app/boogle/k8s
+            
+            # 서버 내부에 deployment.yml 파일 내용을 직접 덮어씁니다.
+            cat << 'EOF' > deployment.yml
+            apiVersion: apps/v1
+            kind: Deployment
+            metadata:
+              name: boogle-deployment
+              labels:
+                app: boogle
+            spec:
+              replicas: 2
+              selector:
+                matchLabels:
+                  app: boogle
+              template:
+                metadata:
+                  labels:
+                    app: boogle
+                spec:
+                  containers:
+                  - name: boogle
+                    image: ${{ secrets.DOCKERHUB_USERNAME }}/boogle:${{ github.sha }}
+                    ports:
+                    - containerPort: 8080
+                    env:
+                    - name: SPRING_PROFILES_ACTIVE
+                      value: "prod"
+            ---
+            apiVersion: v1
+            kind: Service
+            metadata:
+              name: boogle-service
+            spec:
+              type: ClusterIP
+              selector:
+                app: boogle
+              ports:
+                - protocol: TCP
+                  port: 80
+                  targetPort: 8080
+            EOF
+            
+            # 서버 로컬 환경에서 직접 쿠버네티스 배포 명령 실행
+            kubectl apply -f deployment.yml
