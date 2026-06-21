@@ -19,20 +19,20 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      # ⭕ [경로 교정] working-directory가 demo이므로 src/main/resources 주소만 써야 정확히 찾아갑니다.
+      # ⭐️ [강제 주입] 빌드 러너의 절대 경로를 기준 삼아 resources 폴더에 확실하게 꽂아 넣습니다.
       - name: Create secret-prod.properties
         run: |
-          mkdir -p src/main/resources
-          echo "${{ secrets.SECRET_PROD_PROPERTIES }}" > src/main/resources/secret-prod.properties
-        working-directory: demo
+          mkdir -p demo/src/main/resources
+          echo "${{ secrets.SECRET_PROD_PROPERTIES }}" > demo/src/main/resources/secret-prod.properties
 
-      # 1. 이제 secret 파일이 포함된 상태로 안전하게 빌드합니다.
+      # 1. 이제 secret 파일이 100% 포함된 상태로 빌드를 진행합니다.
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
         working-directory: demo
 
+      # --no-daemon을 추가하여 이전 캐시를 무시하고 무조건 새로 패키징하게 만듭니다.
       - name: Build with Gradle
-        run: ./gradlew clean bootJar -x test
+        run: ./gradlew clean bootJar -x test --no-daemon
         working-directory: demo
 
       # 2. 내 기존 Secrets 토큰으로 도커허브 로그인
