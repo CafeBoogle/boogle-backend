@@ -1,0 +1,9 @@
+version: '3.8'
+
+services:
+  boogle-backend:
+    image: twocupoframen/boogle-backend:latest  #  본인의 Docker Hub ID(소문자)로 변경
+    container_name: boogle-backend
+    ports:
+      - "8080:8080"
+    restart: always

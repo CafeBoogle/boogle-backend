@@ -1,108 +1,61 @@
-name: Deploy to Kubernetes
+name: Deploy to EC2 with Docker Hub
 
 on:
   push:
-    branches: [ dev ]
+    branches: [ "dev" ] # 👈 본인의 배포 브랜치 이름(main 또는 master) 확인!
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: demo
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-
-      - name: Create secret-prod.properties
-        run: |
-          echo "${{ secrets.SECRET_PROD_PROPERTIES }}" \
-            > src/main/resources/secret-prod.properties
+          cache: gradle
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
+      # 1. 가상 환경 내부에서 JAR 빌드
       - name: Build with Gradle
-        run: ./gradlew clean build -x test
+        run: ./gradlew clean bootJar -x test
 
-      # 1. Docker Hub 로그인
+      # 2. 내 기존 Secrets 토큰으로 도커허브 로그인
       - name: Log in to Docker Hub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }} # 👈 보유 중이신 Secrets 명칭 반영
 
-      # 2. Docker 이미지 빌드 및 푸시
+      # 3. 이미지 빌드 후 도커허브 푸시
       - name: Build and push Docker image
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v5
         with:
-          context: ./demo
-          file: ./demo/Dockerfile
+          context: .
           push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/boogle:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/boogle:${{ github.sha }}
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/boogle-backend:latest
 
-      # 3. ⭐️ SSH로 EC2에 접속하여 내부에서 쿠버네티스 배포 실행 (방화벽 우회)
-      - name: Executing remote ssh commands to deploy
+      # 4. EC2 원격 접속 후 배포 명령어 수행
+      - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
+          username: ubuntu
           key: ${{ secrets.EC2_SSH_KEY }}
-          port: ${{ secrets.EC2_PORT }}
           script: |
-            export KUBECONFIG=$HOME/.kube/config
-            cd ~/app/boogle/k8s
+            cd ~
+            # 깃허브에 올린 최신 docker-compose.yml 파일 다운로드
+            curl -O https://raw.githubusercontent.com/${{ github.repository }}/main/docker-compose.yml
             
-            # 서버 내부에 deployment.yml 파일 내용을 직접 덮어씁니다.
-            cat << 'EOF' > deployment.yml
-            apiVersion: apps/v1
-            kind: Deployment
-            metadata:
-              name: boogle-deployment
-              labels:
-                app: boogle
-            spec:
-              replicas: 1
-              selector:
-                matchLabels:
-                  app: boogle
-              template:
-                metadata:
-                  labels:
-                    app: boogle
-                spec:
-                  containers:
-                  - name: boogle
-                    image: ${{ secrets.DOCKERHUB_USERNAME }}/boogle:${{ github.sha }}
-                    ports:
-                    - containerPort: 8080
-                    env:
-                    - name: SPRING_PROFILES_ACTIVE
-                      value: "prod"
-            ---
-            apiVersion: v1
-            kind: Service
-            metadata:
-              name: boogle-service
-            spec:
-              type: LoadBalancer
-              selector:
-                app: boogle
-              ports:
-                - protocol: TCP
-                  port: 80
-                  targetPort: 8080
-            EOF
+            # 도커허브에서 새 이미지 땡겨오고 실행
+            docker-compose pull
+            docker-compose up -d
             
-            # 서버 로컬 환경에서 직접 쿠버네티스 배포 명령 실행
-            kubectl apply -f deployment.yml --validate=false
+            # 안 쓰는 옛날 이미지 찌꺼기 삭제해서 디스크 용량 지키기
+            docker image prune -f
