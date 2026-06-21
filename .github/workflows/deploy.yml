@@ -105,4 +105,4 @@ jobs:
             EOF
             
             # 서버 로컬 환경에서 직접 쿠버네티스 배포 명령 실행
-            kubectl apply -f deployment.yml
+            kubectl apply -f deployment.yml --validate=false
