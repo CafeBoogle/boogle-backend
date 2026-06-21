@@ -19,25 +19,30 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      # 1. ⭕ demo 폴더 안에 있는 gradlew를 정확히 찾아 권한을 줍니다.
+      # ⭕ [경로 교정] working-directory가 demo이므로 src/main/resources 주소만 써야 정확히 찾아갑니다.
+      - name: Create secret-prod.properties
+        run: |
+          mkdir -p src/main/resources
+          echo "${{ secrets.SECRET_PROD_PROPERTIES }}" > src/main/resources/secret-prod.properties
+        working-directory: demo
+
+      # 1. 이제 secret 파일이 포함된 상태로 안전하게 빌드합니다.
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
         working-directory: demo
 
-      # 2. ⭕ demo 폴더 내부로 진입하여 스프링 부트 JAR를 빌드합니다.
       - name: Build with Gradle
         run: ./gradlew clean bootJar -x test
         working-directory: demo
 
-      # 3. 내 기존 Secrets 토큰으로 도커허브 로그인
+      # 2. 내 기존 Secrets 토큰으로 도커허브 로그인
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 4. ⭕ 최상위 루트(.) 컨텍스트에서 이미지를 빌드합니다.
-      # (아래 4단계 Dockerfile 수정본과 연동되어 정확히 demo 내부 jar를 가져옵니다)
+      # 3. 이미지 빌드 후 도커허브 푸시
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -45,7 +50,7 @@ jobs:
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/boogle-backend:latest
 
-      # 5. EC2 원격 접속 후 배포 명령어 수행
+      # 4. EC2 원격 접속 후 배포 명령어 수행
       - name: Deploy to EC2 via SSH
         uses: appleboy/ssh-action@master
         with:
