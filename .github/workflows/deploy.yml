@@ -49,22 +49,21 @@ jobs:
           context: .
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/boogle-backend:latest
-
-      # 4. EC2 원격 접속 후 배포 명령어 수행
-      - name: Deploy to EC2 via SSH
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            cd ~
-            # dev 브랜치 최상위에 있는 docker-compose.yml 다운로드
-            curl -O https://raw.githubusercontent.com/${{ github.repository }}/dev/docker-compose.yml
             
-            # 도커허브에서 새 이미지 땡겨오고 실행
-            docker-compose pull
-            docker-compose up -d
-            
-            # 안 쓰는 옛날 이미지 찌꺼기 즉시 제거
-            docker image prune -f
+            # deploy.yml 맨 밑 부분 수정
+            # 4. EC2 원격 접속 후 배포 명령어 수행
+                  - name: Deploy to EC2 via SSH
+                  uses: appleboy/ssh-action@master
+                  with:
+                    host: ${{ secrets.EC2_HOST }}
+                    username: ubuntu
+                    key: ${{ secrets.EC2_SSH_KEY }}
+                    script: |
+                      cd ~
+                      curl -O https://raw.githubusercontent.com/${{ github.repository }}/dev/docker-compose.yml
+                      
+                      # ❌ 기존: docker-compose -> ⭕ 변경: 하이픈(-)을 빼고 한 칸 띄워줍니다!
+                      docker compose pull
+                      docker compose up -d
+                      
+                      docker image prune -f
