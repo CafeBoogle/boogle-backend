@@ -70,6 +70,7 @@ public class SecurityConfig {
                 "https://localhost:5173",
                 "https://boogle-frontend3.vercel.app",
                 "https://boogle.my",
+                "https://www.boogle.my",
                 "https://192.168.10.98:5173",
                 "https://boogle-frontend-test.vercel.app"
         ));
