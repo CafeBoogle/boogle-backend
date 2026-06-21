@@ -95,7 +95,7 @@ jobs:
             metadata:
               name: boogle-service
             spec:
-              type: ClusterIP
+              type: LoadBalancer
               selector:
                 app: boogle
               ports:
