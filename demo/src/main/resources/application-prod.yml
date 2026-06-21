@@ -5,7 +5,7 @@ server:
   forward-headers-strategy: framework
 
 app:
-  frontend-url: https://localhost:5173
+  frontend-url: https://boogle.my
 
 spring:
   datasource:
