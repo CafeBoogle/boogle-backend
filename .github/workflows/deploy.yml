@@ -2,10 +2,8 @@ name: Deploy to EC2 with Docker Hub
 
 on:
   push:
-    branches: [ "dev" ]
-defaults:
-  run:
-    working-directory: ./boogle-backend
+    branches: [ "dev" ] # 👈 현재 타겟인 dev 브랜치 고정
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -21,6 +19,7 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      # 경로 꼬임 제거: 루트 디렉토리에서 바로 실행
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
@@ -33,9 +32,9 @@ jobs:
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }} # 👈 보유 중이신 Secrets 명칭 반영
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 3. 이미지 빌드 후 도커허브 푸시
+      # 3. 이미지 빌드 후 도커허브 푸시 (루트 컨텍스트 적용)
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -52,8 +51,8 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~
-            # 깃허브에 올린 최신 docker-compose.yml 파일 다운로드
-            curl -O https://raw.githubusercontent.com/${{ github.repository }}/main/docker-compose.yml
+            # dev 브랜치에 올라간 최신 docker-compose.yml 파일을 EC2 홈으로 다운로드
+            curl -O https://raw.githubusercontent.com/${{ github.repository }}/dev/docker-compose.yml
             
             # 도커허브에서 새 이미지 땡겨오고 실행
             docker-compose pull
