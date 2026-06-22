@@ -6,4 +6,6 @@ services:
     container_name: boogle-backend
     ports:
       - "8080:8080"
+    volumes:
+      - /home/ubuntu/data:/home/ubuntu/app/data
     restart: always
