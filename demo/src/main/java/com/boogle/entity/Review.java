@@ -41,6 +41,13 @@ public class Review {
     @Builder.Default
     private List<ReviewImage> images = new ArrayList<>();
 
+    @Builder.Default
+    private Boolean isBlinded = false;
+
+    public void blind() {
+        this.isBlinded = true;
+    }
+
     // 점수
     private Integer toiletScore;
     private Integer outletScore;
