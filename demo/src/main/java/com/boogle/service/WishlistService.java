@@ -94,8 +94,8 @@ public class WishlistService {
                 .map(Cafe::getId)
                 .toList();
 
-        // ✅ 3. 카페 점수 조회
-        List<CafeScoreProjection> projections =
+        // 3. 카페 점수 조회
+        List<CafeScoreProjection>projections =
                 reviewRepository.findCafeScoresByCafeIds(cafeIds);
 
         Map<Long, CafeScoreResopnseDto> scoreMap = new HashMap<>();
